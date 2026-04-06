@@ -52,33 +52,16 @@ resource "aws_iam_role_policy" "inline" {
   policy = var.iam_policy
 }
 
-# --- Security group ---
-
-resource "aws_security_group" "lambda" {
-  name_prefix = "${local.prefix}-lambda-"
-  description = "Lambda functions for ${var.hostname}"
-  vpc_id      = module.ctx.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 # --- Lambda functions ---
 
 module "lambda" {
   source   = "../lambda"
   for_each = var.lambdas
 
-  name               = "${local.prefix}-${each.key}"
-  binary             = each.value.binary
-  role_arn           = aws_iam_role.lambda.arn
-  subnet_ids         = module.ctx.private_subnet_ids
-  security_group_ids = [aws_security_group.lambda.id]
-  environment        = merge(var.environment, each.value.environment)
+  name        = "${local.prefix}-${each.key}"
+  binary      = each.value.binary
+  role_arn    = aws_iam_role.lambda.arn
+  environment = merge(var.environment, each.value.environment)
 }
 
 # --- ALB target groups ---

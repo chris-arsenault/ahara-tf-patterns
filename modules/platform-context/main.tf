@@ -41,6 +41,17 @@ data "aws_security_group" "platform_lambda" {
   }
 }
 
+data "aws_security_group" "vpn_client" {
+  filter {
+    name   = "tag:sg:role"
+    values = ["vpn-client"]
+  }
+  filter {
+    name   = "tag:sg:scope"
+    values = ["platform"]
+  }
+}
+
 data "aws_route53_zone" "this" {
   name         = "ahara.io."
   private_zone = false

@@ -245,20 +245,6 @@ resource "aws_cloudwatch_log_group" "og" {
   retention_in_days = 14
 }
 
-resource "aws_security_group" "og" {
-  count       = local.has_og ? 1 : 0
-  name_prefix = "${local.prefix}-og-"
-  description = "OG server for ${var.hostname}"
-  vpc_id      = module.ctx[0].vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 resource "aws_lambda_function" "og" {
   count         = local.has_og ? 1 : 0
   function_name = "${local.prefix}-og-server"
@@ -274,7 +260,7 @@ resource "aws_lambda_function" "og" {
 
   vpc_config {
     subnet_ids         = module.ctx[0].private_subnet_ids
-    security_group_ids = [aws_security_group.og[0].id]
+    security_group_ids = [module.ctx[0].platform_lambda_sg_id]
   }
 
   environment {

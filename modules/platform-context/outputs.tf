@@ -28,6 +28,10 @@ output "platform_lambda_sg_id" {
   value = data.aws_security_group.platform_lambda.id
 }
 
+output "vpn_client_sg_id" {
+  value = data.aws_security_group.vpn_client.id
+}
+
 output "route53_zone_id" {
   value = data.aws_route53_zone.this.zone_id
 }

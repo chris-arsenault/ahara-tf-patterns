@@ -1,5 +1,12 @@
+module "ctx" {
+  source = "../platform-context"
+}
+
 locals {
-  has_vpc = length(var.subnet_ids) > 0
+  security_group_ids = var.vpn_access ? [
+    module.ctx.platform_lambda_sg_id,
+    module.ctx.vpn_client_sg_id
+  ] : [module.ctx.platform_lambda_sg_id]
 }
 
 data "archive_file" "this" {
@@ -20,17 +27,14 @@ resource "aws_lambda_function" "this" {
   runtime       = "provided.al2023"
   architectures = ["x86_64"]
   timeout       = var.timeout
-  memory_size   = var.memory
+  memory_size   = 256
 
   filename         = data.archive_file.this.output_path
   source_code_hash = data.archive_file.this.output_base64sha256
 
-  dynamic "vpc_config" {
-    for_each = local.has_vpc ? [1] : []
-    content {
-      subnet_ids         = var.subnet_ids
-      security_group_ids = var.security_group_ids
-    }
+  vpc_config {
+    subnet_ids         = module.ctx.private_subnet_ids
+    security_group_ids = local.security_group_ids
   }
 
   dynamic "environment" {

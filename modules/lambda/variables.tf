@@ -13,18 +13,6 @@ variable "role_arn" {
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "VPC subnet IDs. Omit for Lambdas that don't need VPC access."
-  type        = list(string)
-  default     = []
-}
-
-variable "security_group_ids" {
-  description = "VPC security group IDs. Omit for Lambdas that don't need VPC access."
-  type        = list(string)
-  default     = []
-}
-
 variable "environment" {
   description = "Environment variables"
   type        = map(string)
@@ -37,8 +25,8 @@ variable "timeout" {
   default     = 30
 }
 
-variable "memory" {
-  description = "Lambda memory in MB"
-  type        = number
-  default     = 256
+variable "vpn_access" {
+  description = "Attach VPN client security group for TrueNAS/WireGuard network access"
+  type        = bool
+  default     = false
 }

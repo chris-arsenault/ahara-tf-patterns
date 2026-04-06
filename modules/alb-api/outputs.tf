@@ -18,11 +18,6 @@ output "role_name" {
   value       = aws_iam_role.lambda.name
 }
 
-output "security_group_id" {
-  description = "Security group ID shared by all Lambdas in this module"
-  value       = aws_security_group.lambda.id
-}
-
 output "hostname" {
   value = var.hostname
 }
