@@ -1,0 +1,42 @@
+# ahara-tf-patterns
+
+Reusable Terraform modules for the Ahara platform. These modules encode standard patterns for deploying applications on the shared infrastructure (ALB, Cognito, CloudFront, VPC).
+
+## Modules
+
+| Module | Purpose | Required Params |
+|--------|---------|-----------------|
+| [`platform-context`](modules/platform-context/) | Reads shared platform resources (VPC, ALB, Cognito, RDS) via tag-based lookups and SSM | 0 |
+| [`lambda`](modules/lambda/) | Standardized Lambda function with CloudWatch log group | 5 |
+| [`alb-api`](modules/alb-api/) | Lambda API(s) behind the shared ALB with JWT auth and custom domain | 2 |
+| [`spa-website`](modules/spa-website/) | SPA on CloudFront + S3 with custom domain, WAF, KMS encryption | 2 |
+| [`static-website`](modules/static-website/) | Static site on CloudFront + S3 with custom domain and versioning | 2 |
+| [`cognito-app`](modules/cognito-app/) | Register an app client with the shared Cognito pool | 1 |
+
+## Usage
+
+Source modules via git:
+
+```hcl
+module "api" {
+  source   = "git::https://github.com/chris-arsenault/ahara-tf-patterns.git//modules/alb-api"
+  hostname = "api.myapp.ahara.io"
+
+  lambdas = {
+    api = {
+      zip    = "../../backend/target/lambda/api/bootstrap.zip"
+      routes = [{ priority = 201, paths = ["/api/*"], authenticated = true }]
+    }
+  }
+}
+```
+
+## Requirements
+
+- Terraform >= 1.12
+- AWS provider >= 6.0
+- Deployed platform infrastructure (platform-network, platform-services)
+
+## Documentation
+
+See [INTEGRATION.md](https://github.com/chris-arsenault/platform/blob/main/INTEGRATION.md) for full platform integration instructions.
