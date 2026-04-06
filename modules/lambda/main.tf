@@ -1,3 +1,13 @@
+locals {
+  has_vpc = length(var.subnet_ids) > 0
+}
+
+data "archive_file" "this" {
+  type        = "zip"
+  source_file = var.binary
+  output_path = "${var.binary}.zip"
+}
+
 resource "aws_cloudwatch_log_group" "this" {
   name              = "/aws/lambda/${var.name}"
   retention_in_days = 14
@@ -9,15 +19,18 @@ resource "aws_lambda_function" "this" {
   handler       = "bootstrap"
   runtime       = "provided.al2023"
   architectures = ["x86_64"]
-  timeout       = 30
-  memory_size   = 256
+  timeout       = var.timeout
+  memory_size   = var.memory
 
-  filename         = var.zip
-  source_code_hash = filebase64sha256(var.zip)
+  filename         = data.archive_file.this.output_path
+  source_code_hash = data.archive_file.this.output_base64sha256
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group_ids
+  dynamic "vpc_config" {
+    for_each = local.has_vpc ? [1] : []
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = var.security_group_ids
+    }
   }
 
   dynamic "environment" {

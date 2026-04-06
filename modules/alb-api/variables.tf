@@ -6,7 +6,7 @@ variable "hostname" {
 variable "lambdas" {
   description = "Map of Lambda function name suffix → configuration"
   type = map(object({
-    zip = string
+    binary = string
     routes = list(object({
       priority      = number
       paths         = list(string)

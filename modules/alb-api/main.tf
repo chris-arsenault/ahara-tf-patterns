@@ -74,7 +74,7 @@ module "lambda" {
   for_each = var.lambdas
 
   name               = "${local.prefix}-${each.key}"
-  zip                = each.value.zip
+  binary             = each.value.binary
   role_arn           = aws_iam_role.lambda.arn
   subnet_ids         = module.ctx.private_subnet_ids
   security_group_ids = [aws_security_group.lambda.id]
