@@ -4,7 +4,7 @@ variable "hostname" {
 }
 
 variable "site_directory" {
-  description = "Path to the built SPA files to upload"
+  description = "Path to the built site files to upload"
   type        = string
 }
 
@@ -20,8 +20,25 @@ variable "encrypt" {
   default     = true
 }
 
-variable "spa" {
-  description = "Enable SPA client-side routing (404/403 → index.html)"
-  type        = bool
-  default     = true
+variable "og_config" {
+  description = "OpenGraph route configuration. When set, deploys the platform OG server as a CloudFront origin for dynamic HTML generation."
+  type = object({
+    site_name = string
+    defaults = object({
+      title       = string
+      description = string
+      image       = optional(string, "")
+    })
+    routes = list(object({
+      pattern     = string
+      query       = string
+      match_field = optional(string)
+      title       = string
+      description = string
+      image       = optional(string)
+      og_type     = optional(string, "article")
+    }))
+    environment = optional(map(string), {})
+  })
+  default = null
 }
