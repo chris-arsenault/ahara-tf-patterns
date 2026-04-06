@@ -1,7 +1,8 @@
 locals {
+  # "app.ahara.io" → prefix "app-ahara-io", domain "ahara.io"
   prefix      = replace(var.hostname, ".", "-")
   domain_name = join(".", slice(split(".", var.hostname), 1, length(split(".", var.hostname))))
-  bucket_name = "${local.prefix}-static"
+  bucket_name = "${local.prefix}-frontend"
 
   site_files = {
     for file in fileset(var.site_directory, "**") :
@@ -39,20 +40,14 @@ data "aws_route53_zone" "this" {
   private_zone = false
 }
 
+data "aws_caller_identity" "current" {}
+
 # =============================================================================
 # S3
 # =============================================================================
 
 resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
-}
-
-resource "aws_s3_bucket_versioning" "this" {
-  bucket = aws_s3_bucket.this.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
 }
 
 resource "aws_s3_bucket_public_access_block" "this" {
@@ -63,6 +58,75 @@ resource "aws_s3_bucket_public_access_block" "this" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# --- KMS encryption (optional) ---
+
+resource "aws_kms_key" "this" {
+  count                   = var.encrypt ? 1 : 0
+  description             = "KMS key for ${local.bucket_name} S3 bucket"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableRootAccountAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudFrontDecrypt"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.this.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_kms_alias" "this" {
+  count         = var.encrypt ? 1 : 0
+  name          = "alias/${local.prefix}-bucket"
+  target_key_id = aws_kms_key.this[0].key_id
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
+  count  = var.encrypt ? 1 : 0
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.this[0].arn
+    }
+  }
+}
+
+# --- Bucket policy ---
 
 resource "aws_s3_bucket_policy" "this" {
   bucket = aws_s3_bucket.this.id
@@ -88,15 +152,17 @@ resource "aws_s3_bucket_policy" "this" {
   })
 }
 
+# --- File uploads ---
+
 resource "aws_s3_object" "files" {
   for_each = local.site_files
 
-  bucket       = aws_s3_bucket.this.id
-  key          = each.key
-  source       = "${var.site_directory}/${each.key}"
-  source_hash  = filemd5("${var.site_directory}/${each.key}")
-  content_type = local.mime_types[regex("\\.[^.]+$", each.key)]
-  cache_control = "public, max-age=3600"
+  bucket        = aws_s3_bucket.this.id
+  key           = each.key
+  source        = "${var.site_directory}/${each.key}"
+  source_hash   = filemd5("${var.site_directory}/${each.key}")
+  content_type  = local.mime_types[regex("\\.[^.]+$", each.key)]
+  cache_control = each.key == "index.html" ? "no-cache" : "public, max-age=31536000, immutable"
 }
 
 resource "aws_s3_object" "config" {
@@ -115,6 +181,22 @@ EOT
 # CloudFront
 # =============================================================================
 
+resource "aws_wafv2_web_acl" "this" {
+  name        = "${local.prefix}-cf-waf"
+  description = "WAF for ${var.hostname} CloudFront"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${replace(local.prefix, "-", "")}CfWaf"
+    sampled_requests_enabled   = true
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "this" {
   name                              = "${local.prefix}-oac"
   description                       = "OAC for ${var.hostname}"
@@ -129,6 +211,7 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   aliases             = [var.hostname]
   price_class         = "PriceClass_100"
+  web_acl_id          = aws_wafv2_web_acl.this.arn
 
   origin {
     domain_name              = aws_s3_bucket.this.bucket_regional_domain_name
@@ -155,6 +238,16 @@ resource "aws_cloudfront_distribution" "this" {
     max_ttl     = 86400
   }
 
+  # SPA routing: return index.html for 404/403 so client-side routing works
+  dynamic "custom_error_response" {
+    for_each = var.spa ? [404, 403] : []
+    content {
+      error_code         = custom_error_response.value
+      response_code      = 200
+      response_page_path = "/index.html"
+    }
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
@@ -165,6 +258,28 @@ resource "aws_cloudfront_distribution" "this" {
     acm_certificate_arn      = aws_acm_certificate.this.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+
+# --- Invalidation on deploy ---
+
+resource "terraform_data" "deployment_marker" {
+  input = sha256(jsonencode([
+    for k, v in aws_s3_object.files : v.source_hash
+  ]))
+
+  lifecycle {
+    action_trigger {
+      events  = [after_create, after_update]
+      actions = [action.aws_cloudfront_create_invalidation.invalidate_all]
+    }
+  }
+}
+
+action "aws_cloudfront_create_invalidation" "invalidate_all" {
+  config {
+    distribution_id = aws_cloudfront_distribution.this.id
+    paths           = ["/*"]
   }
 }
 

@@ -19,3 +19,9 @@ variable "encrypt" {
   type        = bool
   default     = true
 }
+
+variable "spa" {
+  description = "Enable SPA client-side routing (404/403 → index.html)"
+  type        = bool
+  default     = true
+}

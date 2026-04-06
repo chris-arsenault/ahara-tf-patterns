@@ -4,7 +4,7 @@ Reusable Terraform modules for the Ahara platform ecosystem.
 
 ## Architecture
 
-This repo contains six modules under `modules/`:
+This repo contains five modules under `modules/`:
 
 - **platform-context** — Data-only module that discovers shared platform resources via tag-based lookups (VPC, ALB, subnets, security groups, Route53) and SSM parameters (Cognito, RDS). Used internally by `alb-api` and `cognito-app`, and directly by projects needing raw platform references.
 
@@ -12,9 +12,7 @@ This repo contains six modules under `modules/`:
 
 - **alb-api** — The primary API module. Takes a hostname and a map of Lambda functions with their routes. Creates everything: Lambda functions (via `lambda` module), shared IAM role, security group, ALB target groups, listener rules with optional `jwt-validation`, ACM certificate, DNS record. Supports multiple lambdas per hostname and mixed auth/unauth routes.
 
-- **spa-website** — Deploys a single-page app to CloudFront + S3. Handles S3 bucket with public access block, CloudFront OAC, WAF Web ACL, ACM certificate, Route53 A/AAAA records, runtime config injection via `config.js`, MIME type mapping, smart cache control (no-cache for index.html, immutable for hashed assets), and CloudFront invalidation on deploy. Optional KMS encryption.
-
-- **static-website** — Like `spa-website` but for static sites: S3 versioning, uniform 1-hour cache TTL, no SPA error fallback (404/403 are real errors), no WAF or KMS.
+- **website** — Deploys a site to CloudFront + S3. Handles S3 bucket with public access block, CloudFront OAC, WAF Web ACL, ACM certificate, Route53 A/AAAA records, runtime config injection via `config.js`, MIME type mapping, smart cache control (no-cache for index.html, immutable for hashed assets), and CloudFront invalidation on deploy. Optional KMS encryption. Set `spa = false` for static sites where 404 should be a real 404 instead of routing to index.html.
 
 - **cognito-app** — Registers an app client with the shared Cognito user pool. Auto-selects SPA mode (no secret) or server mode (with secret, OAuth code grant) based on whether `callback_urls` is provided. Publishes client ID to SSM for cross-project discovery.
 
