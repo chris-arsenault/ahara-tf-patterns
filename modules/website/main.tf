@@ -1,5 +1,5 @@
 locals {
-  prefix      = replace(var.hostname, ".", "-")
+  prefix      = var.prefix
   domain_name = join(".", slice(split(".", var.hostname), 1, length(split(".", var.hostname))))
   bucket_name = "${local.prefix}-frontend"
   has_og      = var.og_config != null

@@ -1,3 +1,8 @@
+variable "prefix" {
+  description = "Project resource prefix (must match the deployer IAM scope, e.g. 'tastebase')"
+  type        = string
+}
+
 variable "hostname" {
   description = "FQDN for the site (e.g. app.ahara.io)"
   type        = string

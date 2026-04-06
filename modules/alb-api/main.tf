@@ -1,6 +1,5 @@
 locals {
-  # Derive a resource prefix from the hostname (e.g. "api-tastebase-ahara-io")
-  prefix = replace(var.hostname, ".", "-")
+  prefix = var.prefix
 
   # Flatten routes so we can for_each over them
   routes = merge([
