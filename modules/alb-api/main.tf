@@ -45,10 +45,10 @@ resource "aws_iam_role_policy_attachment" "vpc" {
 }
 
 resource "aws_iam_role_policy" "inline" {
-  count  = var.iam_policy != null ? 1 : 0
+  count  = length(var.iam_policy)
   name   = "${local.prefix}-lambda"
   role   = aws_iam_role.lambda.id
-  policy = var.iam_policy
+  policy = var.iam_policy[0]
 }
 
 # --- Lambda functions ---

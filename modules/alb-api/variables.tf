@@ -29,7 +29,7 @@ variable "environment" {
 }
 
 variable "iam_policy" {
-  description = "IAM policy JSON for additional permissions beyond basic execution and VPC access"
-  type        = string
-  default     = null
+  description = "Optional inline IAM policy JSON for additional permissions beyond basic execution and VPC access. Wrap a single policy in a list: [jsonencode(...)] or [data.x.json]. Empty list = no inline policy."
+  type        = list(string)
+  default     = []
 }

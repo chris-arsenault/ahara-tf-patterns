@@ -174,11 +174,11 @@ resource "aws_s3_bucket_policy" "this" {
 resource "aws_s3_object" "files" {
   for_each = local.site_files
 
-  bucket       = aws_s3_bucket.this.id
-  key          = each.key
-  source       = "${var.site_directory}/${each.key}"
-  source_hash  = filemd5("${var.site_directory}/${each.key}")
-  content_type = local.mime_types[regex("\\.[^.]+$", each.key)]
+  bucket        = aws_s3_bucket.this.id
+  key           = each.key
+  source        = "${var.site_directory}/${each.key}"
+  source_hash   = filemd5("${var.site_directory}/${each.key}")
+  content_type  = local.mime_types[regex("\\.[^.]+$", each.key)]
   cache_control = contains(local.no_cache_files, each.key) ? "no-cache" : "public, max-age=31536000, immutable"
 }
 
