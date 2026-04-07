@@ -47,3 +47,7 @@ Modules take an explicit `prefix` parameter (not derived from hostname). The pre
 ## Route53 zone resolution
 
 `website` and `alb-api` look up the Route53 zone by taking the last two labels of `hostname`. This works for both apex domains (`ahara.io` → zone `ahara.io`) and subdomains (`api.tastebase.ahara.io` → zone `ahara.io`). For delegated subzones or multi-label TLDs (`.co.uk`, etc.), pass an explicit `zone_name`.
+
+## Multiple hostnames on one website
+
+The `website` module accepts an optional `aliases` list. Each alias is added to the CloudFront distribution, covered by the ACM cert as a SAN, and pointed at the distribution via Route53 A/AAAA records in the appropriate zone. Aliases can span multiple Route53 zones — each hostname's zone is auto-derived independently from its last 2 labels. Existing single-hostname consumers are unaffected (default `aliases = []`, no state churn for the primary hostname's records).

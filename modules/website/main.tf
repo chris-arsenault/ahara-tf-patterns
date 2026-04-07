@@ -1,13 +1,22 @@
 locals {
   prefix = var.prefix
-  # Default zone is the last two labels of the hostname (works for both
-  # apex like "ahara.io" and subdomains like "app.tastebase.ahara.io").
-  # Override via var.zone_name for delegated subzones or multi-label TLDs.
-  hostname_labels = split(".", var.hostname)
-  zone_name = coalesce(
-    var.zone_name,
-    join(".", slice(local.hostname_labels, length(local.hostname_labels) - 2, length(local.hostname_labels)))
-  )
+
+  # All FQDNs this distribution serves (primary + optional aliases)
+  all_hostnames = concat([var.hostname], var.aliases)
+
+  # Per-hostname zone resolution. Each hostname's zone defaults to its
+  # last two labels (works for both apex and subdomains). The primary
+  # hostname additionally honors var.zone_name as an explicit override.
+  hostname_to_zone = {
+    for h in local.all_hostnames : h => (
+      h == var.hostname && var.zone_name != null
+      ? var.zone_name
+      : join(".", slice(split(".", h), length(split(".", h)) - 2, length(split(".", h))))
+    )
+  }
+
+  unique_zones = toset(values(local.hostname_to_zone))
+
   bucket_name = "${local.prefix}-frontend"
   has_og      = var.og_config != null
 
@@ -59,8 +68,9 @@ locals {
   lambda_origin_id = "Lambda-${local.prefix}-og"
 }
 
-data "aws_route53_zone" "this" {
-  name         = "${local.zone_name}."
+data "aws_route53_zone" "zones" {
+  for_each     = local.unique_zones
+  name         = "${each.value}."
   private_zone = false
 }
 
@@ -324,7 +334,7 @@ resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = local.has_og ? null : "index.html"
-  aliases             = [var.hostname]
+  aliases             = local.all_hostnames
   price_class         = "PriceClass_100"
   web_acl_id          = aws_wafv2_web_acl.this.arn
 
@@ -524,8 +534,9 @@ action "aws_cloudfront_create_invalidation" "invalidate_all" {
 # =============================================================================
 
 resource "aws_acm_certificate" "this" {
-  domain_name       = var.hostname
-  validation_method = "DNS"
+  domain_name               = var.hostname
+  subject_alternative_names = var.aliases
+  validation_method         = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -536,14 +547,15 @@ resource "aws_route53_record" "cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.this.domain_validation_options :
     dvo.domain_name => {
-      name  = dvo.resource_record_name
-      type  = dvo.resource_record_type
-      value = dvo.resource_record_value
+      name    = dvo.resource_record_name
+      type    = dvo.resource_record_type
+      value   = dvo.resource_record_value
+      zone_id = data.aws_route53_zone.zones[local.hostname_to_zone[dvo.domain_name]].zone_id
     }
   }
 
   allow_overwrite = true
-  zone_id         = data.aws_route53_zone.this.zone_id
+  zone_id         = each.value.zone_id
   name            = each.value.name
   type            = each.value.type
   ttl             = 60
@@ -556,7 +568,7 @@ resource "aws_acm_certificate_validation" "this" {
 }
 
 resource "aws_route53_record" "this" {
-  zone_id = data.aws_route53_zone.this.zone_id
+  zone_id = data.aws_route53_zone.zones[local.hostname_to_zone[var.hostname]].zone_id
   name    = var.hostname
   type    = "A"
 
@@ -568,8 +580,38 @@ resource "aws_route53_record" "this" {
 }
 
 resource "aws_route53_record" "ipv6" {
-  zone_id = data.aws_route53_zone.this.zone_id
+  zone_id = data.aws_route53_zone.zones[local.hostname_to_zone[var.hostname]].zone_id
   name    = var.hostname
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# Additional aliases — separate resources so existing single-hostname
+# consumers have no state moves.
+resource "aws_route53_record" "alias_a" {
+  for_each = toset(var.aliases)
+
+  zone_id = data.aws_route53_zone.zones[local.hostname_to_zone[each.value]].zone_id
+  name    = each.value
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "alias_aaaa" {
+  for_each = toset(var.aliases)
+
+  zone_id = data.aws_route53_zone.zones[local.hostname_to_zone[each.value]].zone_id
+  name    = each.value
   type    = "AAAA"
 
   alias {

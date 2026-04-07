@@ -9,9 +9,15 @@ variable "hostname" {
 }
 
 variable "zone_name" {
-  description = "Route53 zone name. Defaults to the last two labels of hostname (e.g. 'ahara.io' for 'app.ahara.io'). Override for delegated subzones or multi-label TLDs."
+  description = "Route53 zone name for the primary hostname. Defaults to the last two labels of hostname. Override for delegated subzones or multi-label TLDs."
   type        = string
   default     = null
+}
+
+variable "aliases" {
+  description = "Additional FQDNs this distribution should also serve. Each is added to the CloudFront alias list, covered by the ACM cert as a SAN, and pointed at the distribution via Route53 A/AAAA records. Zones are auto-derived from each hostname (last 2 labels)."
+  type        = list(string)
+  default     = []
 }
 
 variable "site_directory" {
