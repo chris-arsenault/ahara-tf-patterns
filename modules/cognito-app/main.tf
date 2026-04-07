@@ -28,10 +28,3 @@ resource "aws_cognito_user_pool_client" "this" {
   logout_urls                          = local.is_server && length(var.logout_urls) > 0 ? var.logout_urls : null
   supported_identity_providers         = local.is_server ? ["COGNITO"] : null
 }
-
-# Publish client ID to SSM for cross-project discovery
-resource "aws_ssm_parameter" "client_id" {
-  name  = "/platform/cognito/clients/${var.name}"
-  type  = "String"
-  value = aws_cognito_user_pool_client.this.id
-}
