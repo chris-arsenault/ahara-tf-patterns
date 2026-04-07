@@ -38,6 +38,7 @@ module "api" {
 - Terraform >= 1.12
 - AWS provider >= 6.0
 - Deployed platform infrastructure (platform-network, platform-services)
+- Deployer role configured in [platform-control](https://github.com/chris-arsenault/platform-control) with the appropriate `module_bundles` (one per shared module you use)
 
 ## Documentation
 
