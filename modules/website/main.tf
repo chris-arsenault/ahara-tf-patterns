@@ -510,9 +510,14 @@ resource "aws_cloudfront_distribution" "this" {
 # --- Invalidation on deploy ---
 
 resource "terraform_data" "deployment_marker" {
-  input = sha256(jsonencode([
-    for k, v in aws_s3_object.files : v.source_hash
-  ]))
+  # Trigger invalidation on changes to: static files, runtime_config (which
+  # is interpolated into config.js), or og_config (which is baked into the
+  # OG Lambda environment but also affects served HTML).
+  input = sha256(jsonencode({
+    files          = [for k, v in aws_s3_object.files : v.source_hash]
+    runtime_config = var.runtime_config
+    og_config      = var.og_config
+  }))
 
   lifecycle {
     action_trigger {
