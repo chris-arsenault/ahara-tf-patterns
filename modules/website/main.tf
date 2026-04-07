@@ -1,6 +1,13 @@
 locals {
-  prefix      = var.prefix
-  domain_name = join(".", slice(split(".", var.hostname), 1, length(split(".", var.hostname))))
+  prefix = var.prefix
+  # Default zone is the last two labels of the hostname (works for both
+  # apex like "ahara.io" and subdomains like "app.tastebase.ahara.io").
+  # Override via var.zone_name for delegated subzones or multi-label TLDs.
+  hostname_labels = split(".", var.hostname)
+  zone_name = coalesce(
+    var.zone_name,
+    join(".", slice(local.hostname_labels, length(local.hostname_labels) - 2, length(local.hostname_labels)))
+  )
   bucket_name = "${local.prefix}-frontend"
   has_og      = var.og_config != null
 
@@ -53,7 +60,7 @@ locals {
 }
 
 data "aws_route53_zone" "this" {
-  name         = "${local.domain_name}."
+  name         = "${local.zone_name}."
   private_zone = false
 }
 

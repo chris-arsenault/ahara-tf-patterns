@@ -1,6 +1,14 @@
 locals {
   prefix = var.prefix
 
+  # Default zone is the last two labels of the hostname.
+  # Override via var.zone_name for delegated subzones or multi-label TLDs.
+  hostname_labels = split(".", var.hostname)
+  zone_name = coalesce(
+    var.zone_name,
+    join(".", slice(local.hostname_labels, length(local.hostname_labels) - 2, length(local.hostname_labels)))
+  )
+
   # Flatten routes so we can for_each over them
   routes = merge([
     for fn_key, fn in var.lambdas : {
@@ -8,6 +16,11 @@ locals {
       "${fn_key}-${i}" => merge(route, { fn_key = fn_key })
     }
   ]...)
+}
+
+data "aws_route53_zone" "this" {
+  name         = "${local.zone_name}."
+  private_zone = false
 }
 
 # --- Platform context ---
@@ -154,7 +167,7 @@ resource "aws_route53_record" "cert_validation" {
     }
   }
 
-  zone_id         = module.ctx.route53_zone_id
+  zone_id         = data.aws_route53_zone.this.zone_id
   name            = each.value.name
   type            = each.value.type
   ttl             = 60
@@ -175,7 +188,7 @@ resource "aws_lb_listener_certificate" "this" {
 # --- DNS ---
 
 resource "aws_route53_record" "this" {
-  zone_id = module.ctx.route53_zone_id
+  zone_id = data.aws_route53_zone.this.zone_id
   name    = var.hostname
   type    = "A"
 

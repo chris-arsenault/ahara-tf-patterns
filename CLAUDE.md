@@ -43,3 +43,7 @@ All Lambdas: `provided.al2023`, `bootstrap` handler, `x86_64`, 256 MB memory, VP
 ## Naming and IAM
 
 Modules take an explicit `prefix` parameter (not derived from hostname). The prefix MUST match the project's registered prefix in `platform-control`, since the deployer role's IAM scopes all resources to `{prefix}-*`. The `hostname` parameter is used only for the FQDN (DNS, ACM, CloudFront alias) and never for resource naming.
+
+## Route53 zone resolution
+
+`website` and `alb-api` look up the Route53 zone by taking the last two labels of `hostname`. This works for both apex domains (`ahara.io` → zone `ahara.io`) and subdomains (`api.tastebase.ahara.io` → zone `ahara.io`). For delegated subzones or multi-label TLDs (`.co.uk`, etc.), pass an explicit `zone_name`.

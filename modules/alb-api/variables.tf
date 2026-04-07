@@ -8,6 +8,12 @@ variable "hostname" {
   type        = string
 }
 
+variable "zone_name" {
+  description = "Route53 zone name. Defaults to the last two labels of hostname. Override for delegated subzones or multi-label TLDs."
+  type        = string
+  default     = null
+}
+
 variable "lambdas" {
   description = "Map of Lambda function name suffix → configuration"
   type = map(object({
