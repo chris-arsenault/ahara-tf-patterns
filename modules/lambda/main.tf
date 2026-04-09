@@ -23,7 +23,7 @@ resource "aws_lambda_function" "this" {
   runtime       = "provided.al2023"
   architectures = ["x86_64"]
   timeout       = var.timeout
-  memory_size   = 256
+  memory_size   = var.memory_size
 
   filename         = data.archive_file.this.output_path
   source_code_hash = data.archive_file.this.output_base64sha256

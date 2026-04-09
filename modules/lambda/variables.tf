@@ -25,6 +25,12 @@ variable "timeout" {
   default     = 30
 }
 
+variable "memory_size" {
+  description = "Lambda memory in MB"
+  type        = number
+  default     = 256
+}
+
 variable "vpn_access" {
   description = "Attach VPN client security group for TrueNAS/WireGuard network access"
   type        = bool
