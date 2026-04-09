@@ -50,9 +50,9 @@ variable "vpc" {
 }
 
 variable "alb" {
-  description = "ALB context, typically from platform-context.alb. Used to attach listener rules and DNS alias records."
+  description = "ALB context, typically from platform-context.alb. Used to attach listener rules and DNS alias records. arn is optional (unused by this module, retained for consistency with platform-context's grouped output)."
   type = object({
-    arn          = string
+    arn          = optional(string)
     dns_name     = string
     zone_id      = string
     listener_arn = string
