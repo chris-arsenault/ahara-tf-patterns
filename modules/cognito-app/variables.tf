@@ -14,3 +14,10 @@ variable "logout_urls" {
   type        = list(string)
   default     = []
 }
+
+variable "cognito" {
+  description = "Cognito context, typically from platform-context.cognito output."
+  type = object({
+    user_pool_id = string
+  })
+}

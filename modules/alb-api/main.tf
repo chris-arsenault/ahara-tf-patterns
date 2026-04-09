@@ -23,12 +23,6 @@ data "aws_route53_zone" "this" {
   private_zone = false
 }
 
-# --- Platform context ---
-
-module "ctx" {
-  source = "../platform-context"
-}
-
 # --- IAM role (shared across all Lambdas in this module) ---
 
 data "aws_iam_policy_document" "assume" {
@@ -74,6 +68,7 @@ module "lambda" {
   binary      = each.value.binary
   role_arn    = aws_iam_role.lambda.arn
   environment = merge(var.environment, each.value.environment)
+  vpc         = var.vpc
 }
 
 # --- ALB target groups ---
@@ -104,7 +99,7 @@ resource "aws_lb_target_group_attachment" "this" {
 
 resource "aws_lb_listener_rule" "this" {
   for_each     = local.routes
-  listener_arn = module.ctx.alb_listener_arn
+  listener_arn = var.alb.listener_arn
   priority     = each.value.priority
 
   condition {
@@ -134,8 +129,8 @@ resource "aws_lb_listener_rule" "this" {
       type = "jwt-validation"
 
       jwt_validation {
-        issuer        = module.ctx.cognito_issuer
-        jwks_endpoint = module.ctx.cognito_jwks
+        issuer        = var.cognito.issuer
+        jwks_endpoint = var.cognito.jwks
       }
     }
   }
@@ -181,7 +176,7 @@ resource "aws_acm_certificate_validation" "this" {
 }
 
 resource "aws_lb_listener_certificate" "this" {
-  listener_arn    = module.ctx.alb_listener_arn
+  listener_arn    = var.alb.listener_arn
   certificate_arn = aws_acm_certificate_validation.this.certificate_arn
 }
 
@@ -193,8 +188,8 @@ resource "aws_route53_record" "this" {
   type    = "A"
 
   alias {
-    name                   = module.ctx.alb_dns_name
-    zone_id                = module.ctx.alb_zone_id
+    name                   = var.alb.dns_name
+    zone_id                = var.alb.zone_id
     evaluate_target_health = true
   }
 }

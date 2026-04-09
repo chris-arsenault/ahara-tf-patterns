@@ -1,12 +1,8 @@
-module "ctx" {
-  source = "../platform-context"
-}
-
 locals {
   security_group_ids = var.vpn_access ? [
-    module.ctx.ahara_lambda_sg_id,
-    module.ctx.vpn_client_sg_id
-  ] : [module.ctx.ahara_lambda_sg_id]
+    var.vpc.lambda_sg_id,
+    var.vpc.vpn_client_sg_id,
+  ] : [var.vpc.lambda_sg_id]
 }
 
 data "archive_file" "this" {
@@ -33,7 +29,7 @@ resource "aws_lambda_function" "this" {
   source_code_hash = data.archive_file.this.output_base64sha256
 
   vpc_config {
-    subnet_ids         = module.ctx.private_subnet_ids
+    subnet_ids         = var.vpc.private_subnet_ids
     security_group_ids = local.security_group_ids
   }
 

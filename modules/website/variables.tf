@@ -59,3 +59,21 @@ variable "og_config" {
   })
   default = null
 }
+
+variable "vpc" {
+  description = "VPC context, required only when og_config is set (for the OG server Lambda's vpc_config). Typically from platform-context.vpc."
+  type = object({
+    private_subnet_ids = list(string)
+    lambda_sg_id       = string
+  })
+  default = null
+}
+
+variable "og_artifact" {
+  description = "OG server Lambda artifact location in S3, required only when og_config is set. Typically { bucket = platform-context.og_server.bucket, key = platform-context.og_server.key } or hardcoded in the consumer."
+  type = object({
+    bucket = string
+    key    = string
+  })
+  default = null
+}

@@ -103,3 +103,17 @@ data "aws_security_group" "rds" {
     values = ["ahara"]
   }
 }
+
+# =============================================================================
+# OG Server Lambda artifact — S3 location published by ahara-infra's services
+# layer, read here so consumers using the website module with og_config can
+# pass og_artifact = module.ctx.og_server.
+# =============================================================================
+
+data "aws_ssm_parameter" "og_server_s3_bucket" {
+  name = "/ahara/og-server/s3-bucket"
+}
+
+data "aws_ssm_parameter" "og_server_s3_key" {
+  name = "/ahara/og-server/s3-key"
+}

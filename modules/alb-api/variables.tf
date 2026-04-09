@@ -39,3 +39,31 @@ variable "iam_policy" {
   type        = list(string)
   default     = []
 }
+
+variable "vpc" {
+  description = "VPC context, typically from platform-context.vpc. Forwarded to the internal lambda module."
+  type = object({
+    private_subnet_ids = list(string)
+    lambda_sg_id       = string
+    vpn_client_sg_id   = string
+  })
+}
+
+variable "alb" {
+  description = "ALB context, typically from platform-context.alb. Used to attach listener rules and DNS alias records."
+  type = object({
+    arn          = string
+    dns_name     = string
+    zone_id      = string
+    listener_arn = string
+  })
+}
+
+variable "cognito" {
+  description = "Cognito context, required only when one or more routes have authenticated = true. Typically from platform-context.cognito."
+  type = object({
+    issuer = string
+    jwks   = string
+  })
+  default = null
+}

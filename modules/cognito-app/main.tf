@@ -2,15 +2,11 @@ locals {
   is_server = length(var.callback_urls) > 0
 }
 
-module "ctx" {
-  source = "../platform-context"
-}
-
 # SPA client: no secret, direct auth flows
 # Server client: with secret, OAuth authorization code grant
 resource "aws_cognito_user_pool_client" "this" {
   name         = var.name
-  user_pool_id = module.ctx.cognito_user_pool_id
+  user_pool_id = var.cognito.user_pool_id
 
   generate_secret = local.is_server
 

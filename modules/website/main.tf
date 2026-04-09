@@ -215,20 +215,10 @@ EOT
 # OG Lambda (when og_config is set)
 # =============================================================================
 
-module "ctx" {
-  count  = local.has_og ? 1 : 0
-  source = "../platform-context"
-}
-
-data "aws_ssm_parameter" "og_server_s3_bucket" {
-  count = local.has_og ? 1 : 0
-  name  = "/ahara/og-server/s3-bucket"
-}
-
-data "aws_ssm_parameter" "og_server_s3_key" {
-  count = local.has_og ? 1 : 0
-  name  = "/ahara/og-server/s3-key"
-}
+# Note: when og_config is set, caller MUST also pass vpc and og_artifact.
+# These were previously fetched via platform-context + SSM data sources, which
+# caused duplicate state entries when a consumer instantiated multiple website
+# modules. Consumers now call platform-context once and forward the context.
 
 resource "aws_iam_role" "og" {
   count = local.has_og ? 1 : 0
@@ -272,12 +262,12 @@ resource "aws_lambda_function" "og" {
   timeout       = 10
   memory_size   = 256
 
-  s3_bucket = nonsensitive(data.aws_ssm_parameter.og_server_s3_bucket[0].value)
-  s3_key    = nonsensitive(data.aws_ssm_parameter.og_server_s3_key[0].value)
+  s3_bucket = var.og_artifact.bucket
+  s3_key    = var.og_artifact.key
 
   vpc_config {
-    subnet_ids         = module.ctx[0].private_subnet_ids
-    security_group_ids = [module.ctx[0].ahara_lambda_sg_id]
+    subnet_ids         = var.vpc.private_subnet_ids
+    security_group_ids = [var.vpc.lambda_sg_id]
   }
 
   environment {

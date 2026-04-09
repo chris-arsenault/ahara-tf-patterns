@@ -30,3 +30,12 @@ variable "vpn_access" {
   type        = bool
   default     = false
 }
+
+variable "vpc" {
+  description = "VPC context, typically from platform-context.vpc output. Consumers call platform-context once and forward this to every lambda/alb-api/website call."
+  type = object({
+    private_subnet_ids = list(string)
+    lambda_sg_id       = string
+    vpn_client_sg_id   = string
+  })
+}
