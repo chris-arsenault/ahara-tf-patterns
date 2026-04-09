@@ -222,12 +222,12 @@ module "ctx" {
 
 data "aws_ssm_parameter" "og_server_s3_bucket" {
   count = local.has_og ? 1 : 0
-  name  = "/platform/og-server/s3-bucket"
+  name  = "/ahara/og-server/s3-bucket"
 }
 
 data "aws_ssm_parameter" "og_server_s3_key" {
   count = local.has_og ? 1 : 0
-  name  = "/platform/og-server/s3-key"
+  name  = "/ahara/og-server/s3-key"
 }
 
 resource "aws_iam_role" "og" {
@@ -277,7 +277,7 @@ resource "aws_lambda_function" "og" {
 
   vpc_config {
     subnet_ids         = module.ctx[0].private_subnet_ids
-    security_group_ids = [module.ctx[0].platform_lambda_sg_id]
+    security_group_ids = [module.ctx[0].ahara_lambda_sg_id]
   }
 
   environment {

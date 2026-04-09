@@ -24,8 +24,8 @@ output "alb_listener_arn" {
   value = data.aws_lb_listener.https.arn
 }
 
-output "platform_lambda_sg_id" {
-  value = data.aws_security_group.platform_lambda.id
+output "ahara_lambda_sg_id" {
+  value = data.aws_security_group.ahara_lambda.id
 }
 
 output "vpn_client_sg_id" {

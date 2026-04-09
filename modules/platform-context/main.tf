@@ -8,7 +8,7 @@
 data "aws_vpc" "this" {
   filter {
     name   = "tag:vpc:role"
-    values = ["platform"]
+    values = ["ahara"]
   }
 }
 
@@ -21,7 +21,7 @@ data "aws_subnets" "private" {
 
 data "aws_lb" "this" {
   tags = {
-    "lb:role" = "platform"
+    "lb:role" = "ahara"
   }
 }
 
@@ -30,14 +30,14 @@ data "aws_lb_listener" "https" {
   port              = 443
 }
 
-data "aws_security_group" "platform_lambda" {
+data "aws_security_group" "ahara_lambda" {
   filter {
     name   = "tag:sg:role"
     values = ["lambda"]
   }
   filter {
     name   = "tag:sg:scope"
-    values = ["platform"]
+    values = ["ahara"]
   }
 }
 
@@ -48,7 +48,7 @@ data "aws_security_group" "vpn_client" {
   }
   filter {
     name   = "tag:sg:scope"
-    values = ["platform"]
+    values = ["ahara"]
   }
 }
 
@@ -62,19 +62,19 @@ data "aws_route53_zone" "this" {
 # =============================================================================
 
 data "aws_ssm_parameter" "cognito_user_pool_id" {
-  name = "/platform/cognito/user-pool-id"
+  name = "/ahara/cognito/user-pool-id"
 }
 
 data "aws_ssm_parameter" "cognito_user_pool_arn" {
-  name = "/platform/cognito/user-pool-arn"
+  name = "/ahara/cognito/user-pool-arn"
 }
 
 data "aws_ssm_parameter" "cognito_domain" {
-  name = "/platform/cognito/domain"
+  name = "/ahara/cognito/domain"
 }
 
 data "aws_ssm_parameter" "cognito_issuer_url" {
-  name = "/platform/cognito/issuer-url"
+  name = "/ahara/cognito/issuer-url"
 }
 
 # =============================================================================
@@ -82,15 +82,15 @@ data "aws_ssm_parameter" "cognito_issuer_url" {
 # =============================================================================
 
 data "aws_ssm_parameter" "rds_endpoint" {
-  name = "/platform/rds/endpoint"
+  name = "/ahara/rds/endpoint"
 }
 
 data "aws_ssm_parameter" "rds_address" {
-  name = "/platform/rds/address"
+  name = "/ahara/rds/address"
 }
 
 data "aws_ssm_parameter" "rds_port" {
-  name = "/platform/rds/port"
+  name = "/ahara/rds/port"
 }
 
 data "aws_security_group" "rds" {
@@ -100,6 +100,6 @@ data "aws_security_group" "rds" {
   }
   filter {
     name   = "tag:sg:scope"
-    values = ["platform"]
+    values = ["ahara"]
   }
 }

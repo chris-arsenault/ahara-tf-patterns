@@ -4,9 +4,9 @@ module "ctx" {
 
 locals {
   security_group_ids = var.vpn_access ? [
-    module.ctx.platform_lambda_sg_id,
+    module.ctx.ahara_lambda_sg_id,
     module.ctx.vpn_client_sg_id
-  ] : [module.ctx.platform_lambda_sg_id]
+  ] : [module.ctx.ahara_lambda_sg_id]
 }
 
 data "archive_file" "this" {

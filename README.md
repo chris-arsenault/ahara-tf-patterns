@@ -31,15 +31,15 @@ module "api" {
 }
 ```
 
-`prefix` must match the project prefix registered with platform-control — all resource names use it so they fall within the deployer role's IAM scope.
+`prefix` must match the project prefix registered with ahara-control — all resource names use it so they fall within the deployer role's IAM scope.
 
 ## Requirements
 
 - Terraform >= 1.12
 - AWS provider >= 6.0
-- Deployed platform infrastructure (platform-network, platform-services)
-- Deployer role configured in [platform-control](https://github.com/chris-arsenault/platform-control) with the appropriate `module_bundles` (one per shared module you use)
+- Deployed platform infrastructure (ahara-network, ahara-services)
+- Deployer role configured in [ahara-control](https://github.com/chris-arsenault/ahara-control) with the appropriate `module_bundles` (one per shared module you use)
 
 ## Documentation
 
-See [INTEGRATION.md](https://github.com/chris-arsenault/platform/blob/main/INTEGRATION.md) for full platform integration instructions.
+See [INTEGRATION.md](https://github.com/chris-arsenault/ahara/blob/main/INTEGRATION.md) for full platform integration instructions.

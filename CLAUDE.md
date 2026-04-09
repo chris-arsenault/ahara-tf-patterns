@@ -22,11 +22,11 @@ Platform resources are discovered via tags, not SSM where possible:
 
 | Tag | Resource |
 |-----|----------|
-| `vpc:role = "platform"` | VPC |
-| `lb:role = "platform"` | ALB |
+| `vpc:role = "ahara"` | VPC |
+| `lb:role = "ahara"` | ALB |
 | `subnet:access = "private"` | Private subnets |
-| `sg:role = "lambda"` + `sg:scope = "platform"` | Platform Lambda SG |
-| `sg:role = "vpn-client"` + `sg:scope = "platform"` | VPN client SG (opt-in) |
+| `sg:role = "lambda"` + `sg:scope = "ahara"` | Shared Lambda SG |
+| `sg:role = "vpn-client"` + `sg:scope = "ahara"` | VPN client SG (opt-in) |
 | `sg:role` + `sg:scope` (others) | Various security groups |
 | Route53 zone by name `ahara.io.` | DNS zone |
 
@@ -42,7 +42,7 @@ All Lambdas: `provided.al2023`, `bootstrap` handler, `x86_64`, 256 MB memory, VP
 
 ## Naming and IAM
 
-Modules take an explicit `prefix` parameter (not derived from hostname). The prefix MUST match the project's registered prefix in `platform-control`, since the deployer role's IAM scopes all resources to `{prefix}-*`. The `hostname` parameter is used only for the FQDN (DNS, ACM, CloudFront alias) and never for resource naming.
+Modules take an explicit `prefix` parameter (not derived from hostname). The prefix MUST match the project's registered prefix in `ahara-control`, since the deployer role's IAM scopes all resources to `{prefix}-*`. The `hostname` parameter is used only for the FQDN (DNS, ACM, CloudFront alias) and never for resource naming.
 
 ## Route53 zone resolution
 
