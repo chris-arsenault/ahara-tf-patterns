@@ -9,7 +9,7 @@ Reusable Terraform modules for the Ahara platform. These modules encode standard
 | [`platform-context`](modules/platform-context/) | Reads shared platform resources (VPC, ALB, Cognito, RDS) via tag-based lookups and SSM | 0 |
 | [`lambda`](modules/lambda/) | Standardized Lambda function with CloudWatch log group | 3 |
 | [`alb-api`](modules/alb-api/) | Lambda API(s) behind the shared ALB with JWT auth and custom domain | 3 |
-| [`website`](modules/website/) | Site on CloudFront + S3 with custom domain, WAF, KMS, optional OG server | 3 |
+| [`website`](modules/website/) | Site on CloudFront + S3 with custom domain, KMS, optional OG server | 3 |
 | [`cognito-app`](modules/cognito-app/) | Register an app client with the shared Cognito pool | 1 |
 
 ## Usage

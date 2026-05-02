@@ -12,7 +12,7 @@ This repo contains five modules under `modules/`:
 
 - **alb-api** — The primary API module. Takes a `prefix` (project IAM scope), `hostname`, and a map of Lambda functions with their routes. Creates everything: Lambda functions (via `lambda` module), shared IAM role, ALB target groups, listener rules with optional `jwt-validation`, ACM certificate, DNS record. Supports multiple Lambdas per hostname and mixed auth/unauth routes.
 
-- **website** — Deploys a site to CloudFront + S3. Takes a `prefix` (project IAM scope), `hostname`, and `site_directory`. Handles S3 bucket with public access block, CloudFront OAC, WAF Web ACL, ACM certificate, Route53 A/AAAA records, runtime config injection via `config.js`, MIME type mapping, smart cache control, and CloudFront invalidation on deploy. Optional KMS encryption. When `og_config` is set, deploys the platform OG server Lambda as a second CloudFront origin for dynamic HTML with per-route OpenGraph meta tags.
+- **website** — Deploys a site to CloudFront + S3. Takes a `prefix` (project IAM scope), `hostname`, and `site_directory`. Handles S3 bucket with public access block, CloudFront OAC, ACM certificate, Route53 A/AAAA records, runtime config injection via `config.js`, MIME type mapping, smart cache control, and CloudFront invalidation on deploy. Optional KMS encryption. When `og_config` is set, deploys the platform OG server Lambda as a second CloudFront origin for dynamic HTML with per-route OpenGraph meta tags.
 
 - **cognito-app** — Registers an app client with the shared Cognito user pool. Auto-selects SPA mode (no secret) or server mode (with secret, OAuth code grant) based on whether `callback_urls` is provided. Publishes client ID to SSM for cross-project discovery.
 

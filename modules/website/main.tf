@@ -296,22 +296,6 @@ resource "aws_lambda_function_url" "og" {
 # CloudFront
 # =============================================================================
 
-resource "aws_wafv2_web_acl" "this" {
-  name        = "${local.prefix}-cf-waf"
-  description = "WAF for ${var.hostname} CloudFront"
-  scope       = "CLOUDFRONT"
-
-  default_action {
-    allow {}
-  }
-
-  visibility_config {
-    cloudwatch_metrics_enabled = true
-    metric_name                = "${replace(local.prefix, "-", "")}CfWaf"
-    sampled_requests_enabled   = true
-  }
-}
-
 resource "aws_cloudfront_origin_access_control" "this" {
   name                              = "${local.prefix}-oac"
   description                       = "OAC for ${var.hostname}"
@@ -326,7 +310,6 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = local.has_og ? null : "index.html"
   aliases             = local.all_hostnames
   price_class         = "PriceClass_100"
-  web_acl_id          = aws_wafv2_web_acl.this.arn
 
   # Origin: S3 for static assets
   origin {
