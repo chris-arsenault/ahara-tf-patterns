@@ -78,6 +78,18 @@ data "aws_ssm_parameter" "cognito_issuer_url" {
 }
 
 # =============================================================================
+# Browser RUM — shared Cognito identity pool auth published by ahara-infra
+# =============================================================================
+
+data "aws_ssm_parameter" "rum_identity_pool_id" {
+  name = "/ahara/rum/identity-pool-id"
+}
+
+data "aws_ssm_parameter" "rum_guest_role_arn" {
+  name = "/ahara/rum/guest-role-arn"
+}
+
+# =============================================================================
 # RDS — SSM for connection details, tags for security group
 # =============================================================================
 

@@ -38,6 +38,14 @@ output "cognito" {
   }
 }
 
+output "rum" {
+  description = "Browser RUM auth context: use with project-specific CloudWatch RUM app monitors"
+  value = {
+    identity_pool_id = nonsensitive(data.aws_ssm_parameter.rum_identity_pool_id.value)
+    guest_role_arn   = nonsensitive(data.aws_ssm_parameter.rum_guest_role_arn.value)
+  }
+}
+
 output "rds" {
   description = "RDS context: for consumers that connect directly to the shared DB"
   value = {
@@ -117,6 +125,14 @@ output "cognito_issuer" {
 
 output "cognito_jwks" {
   value = "${nonsensitive(data.aws_ssm_parameter.cognito_issuer_url.value)}/.well-known/jwks.json"
+}
+
+output "rum_identity_pool_id" {
+  value = nonsensitive(data.aws_ssm_parameter.rum_identity_pool_id.value)
+}
+
+output "rum_guest_role_arn" {
+  value = nonsensitive(data.aws_ssm_parameter.rum_guest_role_arn.value)
 }
 
 output "rds_endpoint" {
