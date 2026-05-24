@@ -20,11 +20,10 @@ locals {
   bucket_name = "${local.prefix}-frontend"
   has_og      = var.og_config != null
 
-  # Files to skip in S3 upload
-  skip_files = toset(concat(
-    ["config.js"],
-    local.has_og ? ["index.html"] : []
-  ))
+  # Terraform owns config.js so runtime configuration can be injected during
+  # deploy. Keep index.html uploaded even when OG mode serves HTML through
+  # Lambda; CloudFront may still read the SPA entrypoint during staged updates.
+  skip_files = toset(["config.js"])
 
   site_files = {
     for file in fileset(var.site_directory, "**") :
