@@ -24,7 +24,8 @@ variable "lambdas" {
       methods       = optional(list(string))
       authenticated = optional(bool, true)
     }))
-    environment = optional(map(string), {})
+    environment                    = optional(map(string), {})
+    reserved_concurrent_executions = optional(number)
   }))
 }
 

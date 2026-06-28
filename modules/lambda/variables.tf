@@ -31,6 +31,12 @@ variable "memory_size" {
   default     = 256
 }
 
+variable "reserved_concurrent_executions" {
+  description = "Optional reserved concurrency cap for the Lambda. Null leaves the AWS account default behavior unchanged."
+  type        = number
+  default     = null
+}
+
 variable "vpn_access" {
   description = "Attach VPN client security group for TrueNAS/WireGuard network access"
   type        = bool

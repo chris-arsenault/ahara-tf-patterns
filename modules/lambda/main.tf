@@ -25,6 +25,8 @@ resource "aws_lambda_function" "this" {
   timeout       = var.timeout
   memory_size   = var.memory_size
 
+  reserved_concurrent_executions = var.reserved_concurrent_executions
+
   filename         = data.archive_file.this.output_path
   source_code_hash = data.archive_file.this.output_base64sha256
 
