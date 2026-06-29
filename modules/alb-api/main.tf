@@ -51,6 +51,12 @@ resource "aws_iam_role_policy_attachment" "vpc" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "extra" {
+  for_each   = toset(var.managed_policy_arns)
+  role       = aws_iam_role.lambda.name
+  policy_arn = each.value
+}
+
 resource "aws_iam_role_policy" "inline" {
   count  = length(var.iam_policy)
   name   = "${local.prefix}-lambda"

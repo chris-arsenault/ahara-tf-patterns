@@ -43,6 +43,12 @@ variable "iam_policy" {
   default     = []
 }
 
+variable "managed_policy_arns" {
+  description = "Optional extra managed IAM policy ARNs for the shared Lambda role, for example AWS observability policies."
+  type        = list(string)
+  default     = []
+}
+
 variable "vpc" {
   description = "VPC context, typically from platform-context.vpc. Forwarded to the internal lambda module."
   type = object({

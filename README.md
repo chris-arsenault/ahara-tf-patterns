@@ -40,6 +40,7 @@ The `lambda` module and `alb-api` Lambda entries expose the standard observabili
 - `tracing_mode = "Active"` enables AWS X-Ray tracing for the Lambda.
 - `layers = [...]` attaches ADOT or vendor OpenTelemetry collector layers.
 - OTLP exporters are configured with normal `OTEL_*` environment variables in the module `environment` maps.
+- `managed_policy_arns = [...]` on `alb-api` attaches shared role policies such as AWS Application Signals execution access.
 
 Do not fork the module to add one-off collector/runtime wiring; add reusable module inputs here instead.
 
