@@ -33,6 +33,16 @@ module "api" {
 
 `prefix` must match the project prefix registered with ahara-control — all resource names use it so they fall within the deployer role's IAM scope.
 
+## Lambda Observability
+
+The `lambda` module and `alb-api` Lambda entries expose the standard observability hooks used by Ahara services:
+
+- `tracing_mode = "Active"` enables AWS X-Ray tracing for the Lambda.
+- `layers = [...]` attaches ADOT or vendor OpenTelemetry collector layers.
+- OTLP exporters are configured with normal `OTEL_*` environment variables in the module `environment` maps.
+
+Do not fork the module to add one-off collector/runtime wiring; add reusable module inputs here instead.
+
 ## Requirements
 
 - Terraform >= 1.12

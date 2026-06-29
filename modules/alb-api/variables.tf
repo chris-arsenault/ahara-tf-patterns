@@ -26,6 +26,8 @@ variable "lambdas" {
     }))
     environment                    = optional(map(string), {})
     reserved_concurrent_executions = optional(number)
+    layers                         = optional(list(string), [])
+    tracing_mode                   = optional(string)
   }))
 }
 

@@ -24,6 +24,7 @@ resource "aws_lambda_function" "this" {
   architectures = ["x86_64"]
   timeout       = var.timeout
   memory_size   = var.memory_size
+  layers        = var.layers
 
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
@@ -39,6 +40,13 @@ resource "aws_lambda_function" "this" {
     for_each = length(var.environment) > 0 ? [1] : []
     content {
       variables = var.environment
+    }
+  }
+
+  dynamic "tracing_config" {
+    for_each = var.tracing_mode == null ? [] : [var.tracing_mode]
+    content {
+      mode = tracing_config.value
     }
   }
 

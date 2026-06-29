@@ -69,8 +69,10 @@ module "lambda" {
   role_arn    = aws_iam_role.lambda.arn
   environment = merge(var.environment, each.value.environment)
   vpc         = var.vpc
+  layers      = each.value.layers
 
   reserved_concurrent_executions = each.value.reserved_concurrent_executions
+  tracing_mode                   = each.value.tracing_mode
 }
 
 # --- ALB target groups ---

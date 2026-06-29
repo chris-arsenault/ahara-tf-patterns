@@ -8,7 +8,7 @@ This repo contains five modules under `modules/`:
 
 - **platform-context** — Data-only module that discovers shared platform resources via tag-based lookups (VPC, ALB, subnets, security groups, Route53) and SSM parameters (Cognito, RDS). Used internally by all other modules and directly by projects needing raw platform references.
 
-- **lambda** — Creates a single standardized Lambda function. Hardcoded: `provided.al2023` runtime, `bootstrap` handler, `x86_64`, 256 MB, VPC in private subnets with platform Lambda SG, CloudWatch log group with 14-day retention. Accepts a bare binary path (zips automatically). Only `timeout` is configurable (default 30s). Set `vpn_access = true` for TrueNAS/WireGuard connectivity. Used internally by `alb-api` and directly by projects for non-ALB Lambdas.
+- **lambda** — Creates a single standardized Lambda function. Hardcoded: `provided.al2023` runtime, `bootstrap` handler, `x86_64`, 256 MB, VPC in private subnets with platform Lambda SG, CloudWatch log group with 14-day retention. Accepts a bare binary path (zips automatically). Configurable knobs are intentionally narrow: timeout, memory, reserved concurrency, environment variables, optional Lambda layers, optional X-Ray tracing mode, and `vpn_access` for TrueNAS/WireGuard connectivity. Used internally by `alb-api` and directly by projects for non-ALB Lambdas.
 
 - **alb-api** — The primary API module. Takes a `prefix` (project IAM scope), `hostname`, and a map of Lambda functions with their routes. Creates everything: Lambda functions (via `lambda` module), shared IAM role, ALB target groups, listener rules with optional `jwt-validation`, ACM certificate, DNS record. Supports multiple Lambdas per hostname and mixed auth/unauth routes.
 
@@ -38,7 +38,7 @@ SSM is used only for Cognito (no tag-based data source), RDS connection details,
 
 ## Standards Enforced
 
-All Lambdas: `provided.al2023`, `bootstrap` handler, `x86_64`, 256 MB memory, VPC placement in private subnets with platform Lambda SG, CloudWatch log group with 14-day retention. Only `timeout` is configurable. VPN access is opt-in via `vpn_access = true`, enforced by WireGuard instance ingress rules.
+All Lambdas: `provided.al2023`, `bootstrap` handler, `x86_64`, VPC placement in private subnets with platform Lambda SG, CloudWatch log group with 14-day retention. Runtime observability must use standard Lambda controls: set `tracing_mode = "Active"` for AWS X-Ray and pass OTEL/ADOT/vendor collector layers through `layers`; configure OTLP exporters through environment variables rather than per-project Terraform forks. VPN access is opt-in via `vpn_access = true`, enforced by WireGuard instance ingress rules.
 
 ## Naming and IAM
 

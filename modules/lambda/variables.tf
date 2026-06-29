@@ -37,6 +37,23 @@ variable "reserved_concurrent_executions" {
   default     = null
 }
 
+variable "layers" {
+  description = "Optional Lambda layer ARNs, for example ADOT or vendor OpenTelemetry collector layers."
+  type        = list(string)
+  default     = []
+}
+
+variable "tracing_mode" {
+  description = "Optional Lambda tracing mode. Use Active to enable AWS X-Ray tracing."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.tracing_mode == null || contains(["Active", "PassThrough"], var.tracing_mode)
+    error_message = "tracing_mode must be null, Active, or PassThrough."
+  }
+}
+
 variable "vpn_access" {
   description = "Attach VPN client security group for TrueNAS/WireGuard network access"
   type        = bool
