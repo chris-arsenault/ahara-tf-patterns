@@ -17,7 +17,10 @@ locals {
 
   unique_zones = toset(values(local.hostname_to_zone))
 
-  bucket_name = "${local.prefix}-frontend"
+  # S3 bucket names are globally unique, so scope the conventional frontend
+  # name to the owning AWS account while keeping every other resource prefix
+  # stable and compatible with the project's deployer policy.
+  bucket_name = "${local.prefix}-frontend-${data.aws_caller_identity.current.account_id}"
   has_og      = var.og_config != null
 
   # Files to skip in S3 upload
