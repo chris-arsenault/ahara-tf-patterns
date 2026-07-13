@@ -59,6 +59,7 @@ locals {
     ".map"         = "application/json"
     ".webp"        = "image/webp"
     ".avif"        = "image/avif"
+    ".ogg"         = "audio/ogg"
     ".wasm"        = "application/wasm"
     ".webmanifest" = "application/manifest+json"
   }
