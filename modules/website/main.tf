@@ -421,7 +421,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = local.has_og ? ["*.png", "*.svg", "*.ico", "*.jpg", "*.webp"] : []
+    for_each = local.has_og ? ["*.png", "*.svg", "*.ico", "*.jpg", "*.webp", "*.ogg"] : []
     content {
       path_pattern           = ordered_cache_behavior.value
       allowed_methods        = ["GET", "HEAD"]
