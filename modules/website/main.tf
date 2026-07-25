@@ -19,9 +19,15 @@ locals {
 
   # S3 bucket names are globally unique, so scope the conventional frontend
   # name to the owning AWS account while keeping every other resource prefix
-  # stable and compatible with the project's deployer policy.
-  bucket_name = "${local.prefix}-frontend-${data.aws_caller_identity.current.account_id}"
+  # stable and compatible with the project's deployer policy. Existing sites
+  # can preserve their deployed bucket identity with var.bucket_name.
+  bucket_name = var.bucket_name != null ? var.bucket_name : "${local.prefix}-frontend-${data.aws_caller_identity.current.account_id}"
   has_og      = var.og_config != null
+
+  static_asset_path_patterns = distinct(concat(
+    ["*.png", "*.svg", "*.ico", "*.jpg", "*.webp", "*.ogg"],
+    var.static_asset_path_patterns,
+  ))
 
   # Files to skip in S3 upload
   skip_files = toset(concat(
@@ -421,7 +427,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = local.has_og ? ["*.png", "*.svg", "*.ico", "*.jpg", "*.webp", "*.ogg"] : []
+    for_each = local.has_og ? local.static_asset_path_patterns : []
     content {
       path_pattern           = ordered_cache_behavior.value
       allowed_methods        = ["GET", "HEAD"]

@@ -3,6 +3,17 @@ variable "prefix" {
   type        = string
 }
 
+variable "bucket_name" {
+  description = "Explicit S3 bucket name for an existing deployment. Defaults to the account-scoped <prefix>-frontend-<account_id> convention."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.bucket_name == null ? true : length(trimspace(var.bucket_name)) > 0
+    error_message = "bucket_name must be null or a non-empty string."
+  }
+}
+
 variable "hostname" {
   description = "FQDN for the site (e.g. app.ahara.io or ahara.io)"
   type        = string
@@ -23,6 +34,17 @@ variable "aliases" {
 variable "site_directory" {
   description = "Path to the built site files to upload"
   type        = string
+}
+
+variable "static_asset_path_patterns" {
+  description = "Additional CloudFront path patterns to route to the S3 origin when OpenGraph routing is enabled (for example, [\"masks/*\"])."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for pattern in var.static_asset_path_patterns : length(trimspace(pattern)) > 0])
+    error_message = "static_asset_path_patterns must contain only non-empty patterns."
+  }
 }
 
 variable "runtime_config" {

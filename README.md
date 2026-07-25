@@ -33,6 +33,12 @@ module "api" {
 
 `prefix` must match the project prefix registered with ahara-control — all resource names use it so they fall within the deployer role's IAM scope.
 
+The `website` module defaults new buckets to the account-scoped
+`<prefix>-frontend-<account_id>` convention. Existing deployments can pass
+`bucket_name` to retain their current bucket identity. When `og_config` is
+enabled, use `static_asset_path_patterns` for additional S3-backed paths that
+must bypass the dynamic OpenGraph origin.
+
 ## Lambda Observability
 
 The `lambda` module and `alb-api` Lambda entries expose the standard observability hooks used by Ahara services:
