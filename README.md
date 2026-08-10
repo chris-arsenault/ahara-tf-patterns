@@ -37,7 +37,14 @@ The `website` module defaults new buckets to the account-scoped
 `<prefix>-frontend-<account_id>` convention. Existing deployments can pass
 `bucket_name` to retain their current bucket identity. When `og_config` is
 enabled, use `static_asset_path_patterns` for additional S3-backed paths that
-must bypass the dynamic OpenGraph origin.
+must bypass the dynamic OpenGraph origin. A static site with many reader routes
+can set `og_config.manifest_key` to a JSON file in `site_directory`; the module
+keeps that object out of the HTML origin, grants the OG Lambda read access, and
+restarts the Lambda when the manifest changes.
+
+`cognito-app` keeps confidential OAuth clients as its default. Browser-only
+applications use `public_oauth_client = true` with callback URLs to get a
+secretless authorization-code client for PKCE.
 
 ## Lambda Observability
 

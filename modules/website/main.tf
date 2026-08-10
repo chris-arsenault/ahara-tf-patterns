@@ -21,12 +21,15 @@ locals {
   # name to the owning AWS account while keeping every other resource prefix
   # stable and compatible with the project's deployer policy. Existing sites
   # can preserve their deployed bucket identity with var.bucket_name.
-  bucket_name = var.bucket_name != null ? var.bucket_name : "${local.prefix}-frontend-${data.aws_caller_identity.current.account_id}"
-  has_og      = var.og_config != null
+  bucket_name     = var.bucket_name != null ? var.bucket_name : "${local.prefix}-frontend-${data.aws_caller_identity.current.account_id}"
+  has_og          = var.og_config != null
+  og_manifest_key = local.has_og ? try(var.og_config.manifest_key, null) : null
+  has_og_manifest = local.og_manifest_key != null
 
   static_asset_path_patterns = distinct(concat(
     ["*.png", "*.svg", "*.ico", "*.jpg", "*.webp", "*.ogg"],
     var.static_asset_path_patterns,
+    local.has_og_manifest ? [local.og_manifest_key] : [],
   ))
 
   # Files to skip in S3 upload
@@ -42,7 +45,10 @@ locals {
   }
 
   # Known no-cache files (PWA + SPA entry)
-  no_cache_files = toset(["index.html", "sw.js", "manifest.webmanifest"])
+  no_cache_files = toset(concat(
+    ["index.html", "sw.js", "manifest.webmanifest"],
+    local.has_og_manifest ? [local.og_manifest_key] : [],
+  ))
 
   mime_types = {
     ".html"        = "text/html"
@@ -72,10 +78,16 @@ locals {
 
   # Auto-detect Vite entry points from build output
   entry_js  = one([for f in fileset(var.site_directory, "assets/index-*.js") : "/${f}"])
-  entry_css = one([for f in fileset(var.site_directory, "assets/*.css") : "/${f}"])
+  entry_css = one([for f in fileset(var.site_directory, "assets/index-*.css") : "/${f}"])
 
   s3_origin_id     = "S3-${local.prefix}"
   lambda_origin_id = "Lambda-${local.prefix}-og"
+
+  og_manifest_environment = local.has_og_manifest ? {
+    OG_MANIFEST_BUCKET   = aws_s3_bucket.this.id
+    OG_MANIFEST_KEY      = local.og_manifest_key
+    OG_MANIFEST_REVISION = filemd5("${var.site_directory}/${local.og_manifest_key}")
+  } : {}
 }
 
 data "aws_route53_zone" "zones" {
@@ -256,6 +268,21 @@ resource "aws_iam_role_policy_attachment" "og_vpc" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+resource "aws_iam_role_policy" "og_manifest" {
+  count = local.has_og_manifest ? 1 : 0
+  name  = "read-opengraph-manifest"
+  role  = aws_iam_role.og[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["s3:GetObject"]
+      Resource = "${aws_s3_bucket.this.arn}/${local.og_manifest_key}"
+    }]
+  })
+}
+
 resource "aws_cloudwatch_log_group" "og" {
   count             = local.has_og ? 1 : 0
   name              = "/aws/lambda/${local.prefix}-og-server"
@@ -281,7 +308,7 @@ resource "aws_lambda_function" "og" {
   }
 
   environment {
-    variables = merge(var.og_config.environment, {
+    variables = merge(var.og_config.environment, local.og_manifest_environment, {
       OG_CONFIG = jsonencode({
         site_name = var.og_config.site_name
         defaults  = var.og_config.defaults
@@ -293,7 +320,7 @@ resource "aws_lambda_function" "og" {
     })
   }
 
-  depends_on = [aws_cloudwatch_log_group.og]
+  depends_on = [aws_cloudwatch_log_group.og, aws_s3_object.files]
 }
 
 resource "aws_lambda_function_url" "og" {

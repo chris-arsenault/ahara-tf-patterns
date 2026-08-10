@@ -15,6 +15,17 @@ variable "logout_urls" {
   default     = []
 }
 
+variable "public_oauth_client" {
+  description = "Create an OAuth code-flow client without a secret for a browser PKCE flow. Requires callback_urls."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = var.public_oauth_client ? length(var.callback_urls) > 0 : true
+    error_message = "public_oauth_client requires at least one callback URL."
+  }
+}
+
 variable "cognito" {
   description = "Cognito context, typically from platform-context.cognito output."
   type = object({

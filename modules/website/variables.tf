@@ -48,9 +48,14 @@ variable "static_asset_path_patterns" {
 }
 
 variable "runtime_config" {
-  description = "Key-value map injected as window.__APP_CONFIG__ via config.js"
-  type        = map(any)
+  description = "JSON-compatible object merged into window.__APP_CONFIG__ via config.js"
+  type        = any
   default     = {}
+
+  validation {
+    condition     = can(keys(var.runtime_config))
+    error_message = "runtime_config must be a JSON-compatible object."
+  }
 }
 
 variable "encrypt" {
@@ -60,7 +65,7 @@ variable "encrypt" {
 }
 
 variable "og_config" {
-  description = "OpenGraph route configuration. When set, deploys the platform OG server as a CloudFront origin for dynamic HTML generation."
+  description = "OpenGraph configuration. Routes may query a database, use literal metadata, or come from a JSON manifest already present in site_directory."
   type = object({
     site_name = string
     defaults = object({
@@ -68,18 +73,27 @@ variable "og_config" {
       description = string
       image       = optional(string, "")
     })
-    routes = list(object({
+    routes = optional(list(object({
       pattern     = string
-      query       = string
+      query       = optional(string, "")
       match_field = optional(string)
       title       = string
       description = string
       image       = optional(string)
       og_type     = optional(string, "article")
-    }))
-    environment = optional(map(string), {})
+    })), [])
+    manifest_key = optional(string)
+    environment  = optional(map(string), {})
   })
   default = null
+
+  validation {
+    condition = var.og_config == null ? true : try(
+      var.og_config.manifest_key == null || length(trimspace(var.og_config.manifest_key)) > 0,
+      true,
+    )
+    error_message = "og_config.manifest_key must be null or a non-empty path within site_directory."
+  }
 }
 
 variable "vpc" {
