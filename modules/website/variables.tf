@@ -36,6 +36,12 @@ variable "site_directory" {
   type        = string
 }
 
+variable "response_headers_policy_id" {
+  description = "Optional CloudFront response headers policy applied to every website cache behavior, including worker assets."
+  type        = string
+  default     = null
+}
+
 variable "static_asset_path_patterns" {
   description = "Additional CloudFront path patterns to route to the S3 origin when OpenGraph routing is enabled (for example, [\"masks/*\"])."
   type        = list(string)

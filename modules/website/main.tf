@@ -376,15 +376,16 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "ordered_cache_behavior" {
     for_each = local.has_og ? [1] : []
     content {
-      path_pattern           = "/assets/*"
-      allowed_methods        = ["GET", "HEAD"]
-      cached_methods         = ["GET", "HEAD"]
-      target_origin_id       = local.s3_origin_id
-      viewer_protocol_policy = "redirect-to-https"
-      compress               = true
-      min_ttl                = 31536000
-      default_ttl            = 31536000
-      max_ttl                = 31536000
+      path_pattern               = "/assets/*"
+      allowed_methods            = ["GET", "HEAD"]
+      cached_methods             = ["GET", "HEAD"]
+      target_origin_id           = local.s3_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      compress                   = true
+      response_headers_policy_id = var.response_headers_policy_id
+      min_ttl                    = 31536000
+      default_ttl                = 31536000
+      max_ttl                    = 31536000
 
       forwarded_values {
         query_string = false
@@ -396,15 +397,16 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "ordered_cache_behavior" {
     for_each = local.has_og ? [1] : []
     content {
-      path_pattern           = "/config.js"
-      allowed_methods        = ["GET", "HEAD"]
-      cached_methods         = ["GET", "HEAD"]
-      target_origin_id       = local.s3_origin_id
-      viewer_protocol_policy = "redirect-to-https"
-      compress               = true
-      min_ttl                = 0
-      default_ttl            = 0
-      max_ttl                = 300
+      path_pattern               = "/config.js"
+      allowed_methods            = ["GET", "HEAD"]
+      cached_methods             = ["GET", "HEAD"]
+      target_origin_id           = local.s3_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      compress                   = true
+      response_headers_policy_id = var.response_headers_policy_id
+      min_ttl                    = 0
+      default_ttl                = 0
+      max_ttl                    = 300
 
       forwarded_values {
         query_string = false
@@ -416,15 +418,16 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "ordered_cache_behavior" {
     for_each = local.has_og ? ["sw.js", "manifest.webmanifest"] : []
     content {
-      path_pattern           = "/${ordered_cache_behavior.value}"
-      allowed_methods        = ["GET", "HEAD"]
-      cached_methods         = ["GET", "HEAD"]
-      target_origin_id       = local.s3_origin_id
-      viewer_protocol_policy = "redirect-to-https"
-      compress               = true
-      min_ttl                = 0
-      default_ttl            = 0
-      max_ttl                = 0
+      path_pattern               = "/${ordered_cache_behavior.value}"
+      allowed_methods            = ["GET", "HEAD"]
+      cached_methods             = ["GET", "HEAD"]
+      target_origin_id           = local.s3_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      compress                   = true
+      response_headers_policy_id = var.response_headers_policy_id
+      min_ttl                    = 0
+      default_ttl                = 0
+      max_ttl                    = 0
 
       forwarded_values {
         query_string = false
@@ -436,15 +439,16 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "ordered_cache_behavior" {
     for_each = local.has_og ? [1] : []
     content {
-      path_pattern           = "/workbox-*.js"
-      allowed_methods        = ["GET", "HEAD"]
-      cached_methods         = ["GET", "HEAD"]
-      target_origin_id       = local.s3_origin_id
-      viewer_protocol_policy = "redirect-to-https"
-      compress               = true
-      min_ttl                = 31536000
-      default_ttl            = 31536000
-      max_ttl                = 31536000
+      path_pattern               = "/workbox-*.js"
+      allowed_methods            = ["GET", "HEAD"]
+      cached_methods             = ["GET", "HEAD"]
+      target_origin_id           = local.s3_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      compress                   = true
+      response_headers_policy_id = var.response_headers_policy_id
+      min_ttl                    = 31536000
+      default_ttl                = 31536000
+      max_ttl                    = 31536000
 
       forwarded_values {
         query_string = false
@@ -456,15 +460,16 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "ordered_cache_behavior" {
     for_each = local.has_og ? local.static_asset_path_patterns : []
     content {
-      path_pattern           = ordered_cache_behavior.value
-      allowed_methods        = ["GET", "HEAD"]
-      cached_methods         = ["GET", "HEAD"]
-      target_origin_id       = local.s3_origin_id
-      viewer_protocol_policy = "redirect-to-https"
-      compress               = true
-      min_ttl                = 3600
-      default_ttl            = 86400
-      max_ttl                = 604800
+      path_pattern               = ordered_cache_behavior.value
+      allowed_methods            = ["GET", "HEAD"]
+      cached_methods             = ["GET", "HEAD"]
+      target_origin_id           = local.s3_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      compress                   = true
+      response_headers_policy_id = var.response_headers_policy_id
+      min_ttl                    = 3600
+      default_ttl                = 86400
+      max_ttl                    = 604800
 
       forwarded_values {
         query_string = false
@@ -476,11 +481,12 @@ resource "aws_cloudfront_distribution" "this" {
   # --- Default behavior ---
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = local.has_og ? local.lambda_origin_id : local.s3_origin_id
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = local.has_og ? local.lambda_origin_id : local.s3_origin_id
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
+    response_headers_policy_id = var.response_headers_policy_id
 
     forwarded_values {
       query_string = false
