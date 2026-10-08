@@ -42,6 +42,12 @@ can set `og_config.manifest_key` to a JSON file in `site_directory`; the module
 keeps that object out of the HTML origin, grants the OG Lambda read access, and
 restarts the Lambda when the manifest changes.
 
+Static sites serve their built `index.html` and can include OpenGraph tags there
+without enabling the dynamic renderer. Their script and stylesheet filenames are
+unrestricted. Dynamic OpenGraph sites retain the single-entry convention:
+`assets/index-*.js` and `assets/index-*.css` must each identify the shell's entry
+asset; name dependency chunks separately.
+
 `cognito-app` keeps confidential OAuth clients as its default. Browser-only
 applications use `public_oauth_client = true` with callback URLs to get a
 secretless authorization-code client for PKCE.

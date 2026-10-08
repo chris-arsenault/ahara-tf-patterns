@@ -36,6 +36,23 @@ variables {
 run "pdf_assets" {
   command = plan
   assert {
+    condition = (
+      local.entry_js == null && local.entry_css == null &&
+      length(aws_lambda_function.og) == 0 &&
+      aws_cloudfront_distribution.this.default_root_object == "index.html"
+    )
+    error_message = "Static sites must use their built HTML without evaluating dynamic OG entry discovery."
+  }
+  assert {
+    condition = (
+      aws_s3_object.files["assets/index-app.js"].content_type == "application/javascript" &&
+      aws_s3_object.files["assets/index-worker.js"].content_type == "application/javascript" &&
+      aws_s3_object.files["assets/index-app.css"].content_type == "text/css" &&
+      aws_s3_object.files["assets/index-worker.css"].content_type == "text/css"
+    )
+    error_message = "Static sites must retain all scripts and styles even when multiple filenames match the OG entry patterns."
+  }
+  assert {
     condition     = aws_s3_bucket.this.bucket == "pdfree-frontend-559098897826"
     error_message = "The website bucket must remain account-scoped."
   }
@@ -54,5 +71,42 @@ run "pdf_assets" {
       aws_s3_object.files["worker.mjs"].cache_control == "public, max-age=31536000, immutable"
     )
     error_message = "Service-worker updates must revalidate while versioned PDF assets remain immutable."
+  }
+}
+
+run "dynamic_og_entry" {
+  command = plan
+  variables {
+    site_directory = "./tests/og-assets"
+    vpc = {
+      private_subnet_ids = ["subnet-synthetic"]
+      lambda_sg_id       = "sg-synthetic"
+    }
+    og_artifact = {
+      bucket = "synthetic-platform-artifacts"
+      key    = "og-server.zip"
+    }
+    og_config = {
+      site_name = "Existing OpenGraph site"
+      defaults = {
+        title       = "Existing entry contract"
+        description = "Keep the dynamic renderer's entry paths unchanged."
+      }
+    }
+  }
+  assert {
+    condition = (
+      aws_lambda_function.og[0].environment[0].variables["ENTRY_JS"] == "/assets/index-app.js" &&
+      aws_lambda_function.og[0].environment[0].variables["ENTRY_CSS"] == "/assets/index-app.css"
+    )
+    error_message = "Dynamic OpenGraph sites must keep their existing entry discovery contract."
+  }
+  assert {
+    condition = (
+      !contains(keys(aws_s3_object.files), "index.html") &&
+      contains(keys(aws_s3_object.files), "assets/chunk-index-dependency.js") &&
+      aws_cloudfront_distribution.this.default_root_object == null
+    )
+    error_message = "Dynamic sites must keep serving HTML through the OG origin and uploading dependency chunks to S3."
   }
 }

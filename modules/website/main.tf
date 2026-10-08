@@ -80,9 +80,10 @@ locals {
     ".webmanifest" = "application/manifest+json"
   }
 
-  # Auto-detect Vite entry points from build output
-  entry_js  = one([for f in fileset(var.site_directory, "assets/index-*.js") : "/${f}"])
-  entry_css = one([for f in fileset(var.site_directory, "assets/index-*.css") : "/${f}"])
+  # Only the dynamic OG shell needs a single entry script and stylesheet.
+  # Static sites serve their built HTML, which already references every chunk.
+  entry_js  = local.has_og ? one([for f in fileset(var.site_directory, "assets/index-*.js") : "/${f}"]) : null
+  entry_css = local.has_og ? one([for f in fileset(var.site_directory, "assets/index-*.css") : "/${f}"]) : null
 
   s3_origin_id     = "S3-${local.prefix}"
   lambda_origin_id = "Lambda-${local.prefix}-og"
