@@ -56,6 +56,7 @@ locals {
     ".js"          = "application/javascript"
     ".mjs"         = "application/javascript"
     ".json"        = "application/json"
+    ".gz"          = "application/gzip"
     ".svg"         = "image/svg+xml"
     ".png"         = "image/png"
     ".jpg"         = "image/jpeg"

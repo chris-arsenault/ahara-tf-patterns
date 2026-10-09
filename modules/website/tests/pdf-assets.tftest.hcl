@@ -67,6 +67,14 @@ run "pdf_assets" {
   }
   assert {
     condition = (
+      aws_s3_object.files["ocr/lang/eng.traineddata.gz"].content_type == "application/gzip" &&
+      aws_s3_object.files["ocr/lang/eng.traineddata.gz"].content_encoding == null &&
+      aws_s3_object.files["ocr/lang/eng.traineddata.gz"].cache_control == "public, max-age=31536000, immutable"
+    )
+    error_message = "Compressed OCR language data must upload as a gzip file without HTTP content encoding so the OCR worker can decode it."
+  }
+  assert {
+    condition = (
       aws_s3_object.files["sw.js"].cache_control == "no-cache" &&
       aws_s3_object.files["worker.mjs"].cache_control == "public, max-age=31536000, immutable"
     )
