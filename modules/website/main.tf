@@ -352,7 +352,7 @@ resource "aws_cloudfront_distribution" "this" {
   is_ipv6_enabled     = true
   default_root_object = local.has_og ? null : "index.html"
   aliases             = local.all_hostnames
-  price_class         = "PriceClass_100"
+  price_class         = var.price_class
 
   # Origin: S3 for static assets
   origin {

@@ -48,6 +48,13 @@ unrestricted. Dynamic OpenGraph sites retain the single-entry convention:
 `assets/index-*.js` and `assets/index-*.css` must each identify the shell's entry
 asset; name dependency chunks separately.
 
+Website edge coverage defaults to `price_class = "PriceClass_100"`, preserving
+delivery from North America and Europe for existing consumers. Set
+`price_class = "PriceClass_200"` to add other regions except South America and
+Australia/New Zealand, or `price_class = "PriceClass_All"` for worldwide edge
+coverage. Regional usage rates apply; there is no fixed fee for selecting a
+broader price class. This input does not change caching or security headers.
+
 `cognito-app` keeps confidential OAuth clients as its default. Browser-only
 applications use `public_oauth_client = true` with callback URLs to get a
 secretless authorization-code client for PKCE.

@@ -36,6 +36,10 @@ variables {
 run "pdf_assets" {
   command = plan
   assert {
+    condition     = aws_cloudfront_distribution.this.price_class == "PriceClass_100"
+    error_message = "Website consumers that omit price_class must retain their existing edge coverage."
+  }
+  assert {
     condition = (
       local.entry_js == null && local.entry_css == null &&
       length(aws_lambda_function.og) == 0 &&
@@ -80,6 +84,36 @@ run "pdf_assets" {
     )
     error_message = "Service-worker updates must revalidate while versioned PDF assets remain immutable."
   }
+}
+
+run "expanded_edge_coverage" {
+  command = plan
+  variables {
+    price_class = "PriceClass_200"
+  }
+  assert {
+    condition     = aws_cloudfront_distribution.this.price_class == "PriceClass_200"
+    error_message = "Website consumers must be able to select expanded edge coverage."
+  }
+}
+
+run "global_edge_coverage" {
+  command = plan
+  variables {
+    price_class = "PriceClass_All"
+  }
+  assert {
+    condition     = aws_cloudfront_distribution.this.price_class == "PriceClass_All"
+    error_message = "Website consumers must be able to select all CloudFront regions."
+  }
+}
+
+run "invalid_edge_coverage" {
+  command = plan
+  variables {
+    price_class = "PriceClass_300"
+  }
+  expect_failures = [var.price_class]
 }
 
 run "dynamic_og_entry" {

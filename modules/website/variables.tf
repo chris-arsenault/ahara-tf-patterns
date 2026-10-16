@@ -36,6 +36,18 @@ variable "site_directory" {
   type        = string
 }
 
+variable "price_class" {
+  description = "CloudFront edge coverage: PriceClass_100 for North America and Europe, PriceClass_200 for additional regions except South America and Australia/New Zealand, or PriceClass_All for all regions."
+  type        = string
+  default     = "PriceClass_100"
+  nullable    = false
+
+  validation {
+    condition     = contains(["PriceClass_100", "PriceClass_200", "PriceClass_All"], var.price_class)
+    error_message = "price_class must be PriceClass_100, PriceClass_200, or PriceClass_All."
+  }
+}
+
 variable "response_headers_policy_id" {
   description = "Optional CloudFront response headers policy applied to every website cache behavior, including worker assets."
   type        = string
