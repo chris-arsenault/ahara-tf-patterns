@@ -6,6 +6,37 @@ variable "name" {
 variable "binary" {
   description = "Path to the bootstrap binary (will be zipped automatically)"
   type        = string
+  default     = null
+  validation {
+    condition     = (var.binary != null) != (var.package_file != null)
+    error_message = "Supply exactly one binary or package_file."
+  }
+}
+
+variable "package_file" {
+  description = "Optional prebuilt ZIP containing the handler and dependencies."
+  type        = string
+  default     = null
+}
+variable "runtime" {
+  description = "Lambda runtime; existing binary callers use provided.al2023."
+  type        = string
+  default     = "provided.al2023"
+}
+variable "handler" {
+  description = "Handler within a ZIP package."
+  type        = string
+  default     = "bootstrap"
+}
+
+variable "ephemeral_storage" {
+  description = "Lambda scratch storage in MB."
+  type        = number
+  default     = 512
+  validation {
+    condition     = var.ephemeral_storage >= 512 && var.ephemeral_storage <= 10240
+    error_message = "Lambda scratch storage must be between 512 and 10240 MB."
+  }
 }
 
 variable "role_arn" {

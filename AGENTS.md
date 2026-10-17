@@ -4,7 +4,7 @@ Reusable Terraform modules for the Ahara platform ecosystem.
 
 ## Architecture
 
-This repo contains five modules under `modules/`:
+This repo contains six modules under `modules/`:
 
 - **platform-context** — Data-only module that discovers shared platform resources via tag-based lookups (VPC, ALB, subnets, security groups, Route53) and SSM parameters (Cognito, RDS). Used internally by all other modules and directly by projects needing raw platform references.
 
@@ -15,6 +15,12 @@ This repo contains five modules under `modules/`:
 - **website** — Deploys a site to CloudFront + S3. Takes a `prefix` (project IAM scope), `hostname`, and `site_directory`. Handles an account-scoped `${prefix}-frontend-${account_id}` S3 bucket with public access block, CloudFront OAC, ACM certificate, Route53 A/AAAA records, runtime config injection via `config.js`, MIME type mapping, smart cache control, and CloudFront invalidation on deploy. Optional KMS encryption. When `og_config` is set, deploys the platform OG server Lambda as a second CloudFront origin for dynamic HTML with per-route OpenGraph meta tags.
 
 - **cognito-app** — Registers an app client with the shared Cognito user pool. Auto-selects SPA mode (no secret) or server mode (with secret, OAuth code grant) based on whether `callback_urls` is provided. Publishes client ID to SSM for cross-project discovery.
+
+- **pipeline** — Creates client-owned Standard workflows, Scheduler, delivery DLQ/alarm and a shared registry item. Takes native ASL and worker ARNs. Platform-context discovers shared table and alarm identifiers when `pipelines_enabled = true`. Shared status recording lives in ahara-infra; processing lives in client repositories.
+
+`lambda` also accepts a prebuilt ZIP using `package_file`, with `runtime` and
+`handler` inputs. Their defaults preserve existing `provided.al2023`/`bootstrap`
+binary callers. Native dependency builds belong to the client.
 
 ## Resource Discovery
 
@@ -30,7 +36,7 @@ Platform resources are discovered via tags, not SSM where possible:
 | `sg:role` + `sg:scope` (others) | Various security groups |
 | Route53 zone by name `ahara.io.` | DNS zone |
 
-SSM is used only for Cognito (no tag-based data source), RDS connection details, and the OG server S3 artifact location.
+SSM supplies Cognito/RDS details, the OG artifact location, and opt-in pipeline table/alarm discovery.
 
 ## Module Composition
 
@@ -38,7 +44,7 @@ SSM is used only for Cognito (no tag-based data source), RDS connection details,
 
 ## Standards Enforced
 
-All Lambdas: `provided.al2023`, `bootstrap` handler, `x86_64`, VPC placement in private subnets with platform Lambda SG, CloudWatch log group with 14-day retention. Runtime observability must use standard Lambda controls: set `tracing_mode = "Active"` for AWS X-Ray and pass OTEL/ADOT/vendor collector layers through `layers`; configure OTLP exporters through environment variables rather than per-project Terraform forks. VPN access is opt-in via `vpn_access = true`, enforced by WireGuard instance ingress rules.
+Binary callers default to `provided.al2023` and `bootstrap`; prebuilt ZIP callers can specify another managed runtime and handler. All retain `x86_64`, private VPC subnets, the platform Lambda SG and 14-day log retention. Runtime observability uses standard Lambda controls: `tracing_mode = "Active"` enables X-Ray, `layers` accepts collector layers, and environment variables configure OTLP exporters. VPN access is opt-in through `vpn_access = true` and WireGuard ingress rules.
 
 ## Naming and IAM
 

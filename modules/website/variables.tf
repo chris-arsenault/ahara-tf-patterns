@@ -3,6 +3,27 @@ variable "prefix" {
   type        = string
 }
 
+variable "data_origin" {
+  description = "Optional pipeline-owned S3 origin for /data/*. This module never manages its objects."
+  type = object({
+    domain_name = string
+    origin_path = optional(string, "")
+  })
+  default = null
+}
+
+variable "spa_fallback" {
+  description = "Rewrite S3 403/404 to index.html. Disable when missing dataset objects must retain errors."
+  type        = bool
+  default     = true
+}
+
+variable "invalidation_paths" {
+  description = "Frontend deployment cache invalidation paths."
+  type        = list(string)
+  default     = ["/*"]
+}
+
 variable "bucket_name" {
   description = "Explicit S3 bucket name for an existing deployment. Defaults to the account-scoped <prefix>-frontend-<account_id> convention."
   type        = string

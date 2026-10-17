@@ -1,6 +1,23 @@
 # Platform Context — reads shared platform resources via tag-based
 # lookups and name-based lookups where possible, SSM for the rest.
 
+data "aws_ssm_parameter" "pipeline_registry" {
+  count = var.pipelines_enabled ? 1 : 0
+  name  = "/ahara/pipelines/registry-table"
+}
+data "aws_ssm_parameter" "pipeline_jobs" {
+  count = var.pipelines_enabled ? 1 : 0
+  name  = "/ahara/pipelines/jobs-table"
+}
+data "aws_dynamodb_table" "pipeline_registry" {
+  count = var.pipelines_enabled ? 1 : 0
+  name  = nonsensitive(data.aws_ssm_parameter.pipeline_registry[0].value)
+}
+data "aws_ssm_parameter" "pipeline_alarms" {
+  count = var.pipelines_enabled ? 1 : 0
+  name  = "/ahara/alarms/sns-topic-arn"
+}
+
 # =============================================================================
 # Network — tag-based and derived lookups
 # =============================================================================

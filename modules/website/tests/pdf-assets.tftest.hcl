@@ -152,3 +152,25 @@ run "dynamic_og_entry" {
     error_message = "Dynamic sites must keep serving HTML through the OG origin and uploading dependency chunks to S3."
   }
 }
+
+run "pipeline_data_origin" {
+  command = plan
+  variables {
+    data_origin  = { domain_name = "atlas-data.s3.us-east-1.amazonaws.com", origin_path = "/published" }
+    spa_fallback = false
+  }
+  assert {
+    condition = (
+      aws_cloudfront_distribution.this.ordered_cache_behavior[0].path_pattern == "/data/v1/channel.json" &&
+      aws_cloudfront_distribution.this.ordered_cache_behavior[0].max_ttl == 0 &&
+      aws_cloudfront_distribution.this.ordered_cache_behavior[1].path_pattern == "/data/*" &&
+      aws_cloudfront_distribution.this.ordered_cache_behavior[1].compress == false &&
+      length(aws_cloudfront_distribution.this.custom_error_response) == 0
+    )
+    error_message = "Data channels must never cache, range archives must remain uncompressed, and missing data must retain errors."
+  }
+  assert {
+    condition     = alltrue([for key in keys(aws_s3_object.files) : !startswith(key, "data/")])
+    error_message = "Website Terraform must not manage pipeline output objects."
+  }
+}

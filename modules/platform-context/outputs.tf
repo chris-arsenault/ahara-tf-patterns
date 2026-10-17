@@ -17,6 +17,16 @@ output "vpc" {
   }
 }
 
+output "pipelines" {
+  description = "Shared pipeline discovery, available when pipelines_enabled is true."
+  value = var.pipelines_enabled ? {
+    registry_table_name = nonsensitive(data.aws_ssm_parameter.pipeline_registry[0].value)
+    registry_table_arn  = data.aws_dynamodb_table.pipeline_registry[0].arn
+    jobs_table_name     = nonsensitive(data.aws_ssm_parameter.pipeline_jobs[0].value)
+    alarm_topic_arn     = nonsensitive(data.aws_ssm_parameter.pipeline_alarms[0].value)
+  } : null
+}
+
 output "alb" {
   description = "ALB context: pass to alb-api.alb"
   value = {

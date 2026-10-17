@@ -6,6 +6,7 @@ locals {
 }
 
 data "archive_file" "this" {
+  count       = var.binary != null ? 1 : 0
   type        = "zip"
   source_file = var.binary
   output_path = "${var.binary}.zip"
@@ -19,8 +20,8 @@ resource "aws_cloudwatch_log_group" "this" {
 resource "aws_lambda_function" "this" {
   function_name = var.name
   role          = var.role_arn
-  handler       = "bootstrap"
-  runtime       = "provided.al2023"
+  handler       = var.handler
+  runtime       = var.runtime
   architectures = ["x86_64"]
   timeout       = var.timeout
   memory_size   = var.memory_size
@@ -28,8 +29,10 @@ resource "aws_lambda_function" "this" {
 
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
-  filename         = data.archive_file.this.output_path
-  source_code_hash = data.archive_file.this.output_base64sha256
+  filename         = var.package_file != null ? var.package_file : data.archive_file.this[0].output_path
+  source_code_hash = var.package_file != null ? filebase64sha256(var.package_file) : data.archive_file.this[0].output_base64sha256
+
+  ephemeral_storage { size = var.ephemeral_storage }
 
   vpc_config {
     subnet_ids         = var.vpc.private_subnet_ids

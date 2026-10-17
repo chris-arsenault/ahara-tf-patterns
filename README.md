@@ -11,6 +11,7 @@ Reusable Terraform modules for the Ahara platform. These modules encode standard
 | [`alb-api`](modules/alb-api/) | Lambda API(s) behind the shared ALB with JWT auth and custom domain | 3 |
 | [`website`](modules/website/) | Site on CloudFront + account-scoped S3 with custom domain, KMS, optional OG server | 3 |
 | [`cognito-app`](modules/cognito-app/) | Register an app client with the shared Cognito pool | 1 |
+| [`pipeline`](modules/pipeline/) | Client-owned Standard workflow, Scheduler, delivery DLQ and shared registration | Native ASL, workers, schedule, platform context |
 
 ## Usage
 
@@ -60,6 +61,25 @@ applications use `public_oauth_client = true` with callback URLs to get a
 secretless authorization-code client for PKCE.
 
 ## Lambda Observability
+
+`lambda` accepts its existing `binary` input or a prebuilt ZIP through
+`package_file`. `runtime` and `handler` default to `provided.al2023` and
+`bootstrap`, preserving existing binary callers. Python callers can set
+`runtime = "python3.12"` and their module handler. `ephemeral_storage` defaults
+to 512 MB and can be raised to 10,240 MB. All callers retain the shared VPC,
+log group, timeout, memory, and concurrency controls.
+
+For scheduled work, enable `pipelines_enabled` on `platform-context` and pass
+its `pipelines` output to `pipeline`. Shared DynamoDB tables and status delivery
+belong to ahara-infra; clients own their ASL, workers, schedules and registry
+items. See the [pipeline contract](https://github.com/chris-arsenault/ahara/blob/main/docs/data-pipelines.md).
+
+`website.data_origin` routes `/data/v1/channel.json` without caching and
+`/data/*` to a separately owned S3 origin. Binary ranges remain uncompressed;
+clients can publish precompressed JSON with Content-Encoding. Set
+`spa_fallback = false` to preserve missing-object errors and use
+`invalidation_paths` to limit frontend invalidations. The website module never
+uploads or prunes objects in that separate data origin.
 
 The `lambda` module and `alb-api` Lambda entries expose the standard observability hooks used by Ahara services:
 

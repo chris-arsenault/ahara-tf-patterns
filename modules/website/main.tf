@@ -79,6 +79,8 @@ locals {
     ".ogg"         = "audio/ogg"
     ".wasm"        = "application/wasm"
     ".webmanifest" = "application/manifest+json"
+    ".pmtiles"     = "application/vnd.pmtiles"
+    ".geojson"     = "application/geo+json"
   }
 
   # Only the dynamic OG shell needs a single entry script and stylesheet.
@@ -363,6 +365,37 @@ resource "aws_cloudfront_distribution" "this" {
 
   # Origin: OG Lambda for HTML (when enabled)
   dynamic "origin" {
+    for_each = var.data_origin == null ? [] : [var.data_origin]
+    content {
+      domain_name              = origin.value.domain_name
+      origin_path              = origin.value.origin_path
+      origin_id                = "Data-${local.prefix}"
+      origin_access_control_id = aws_cloudfront_origin_access_control.this.id
+    }
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = var.data_origin == null ? [] : ["/data/v1/channel.json", "/data/*"]
+    content {
+      path_pattern               = ordered_cache_behavior.value
+      target_origin_id           = "Data-${local.prefix}"
+      allowed_methods            = ["GET", "HEAD"]
+      cached_methods             = ["GET", "HEAD"]
+      viewer_protocol_policy     = "redirect-to-https"
+      compress                   = ordered_cache_behavior.value == "/data/v1/channel.json"
+      response_headers_policy_id = var.response_headers_policy_id
+      min_ttl                    = 0
+      default_ttl                = ordered_cache_behavior.value == "/data/v1/channel.json" ? 0 : 31536000
+      max_ttl                    = ordered_cache_behavior.value == "/data/v1/channel.json" ? 0 : 31536000
+      forwarded_values {
+        query_string = false
+        cookies { forward = "none" }
+      }
+    }
+  }
+
+  # Origin: OG Lambda for HTML (when enabled)
+  dynamic "origin" {
     for_each = local.has_og ? [1] : []
     content {
       domain_name = replace(replace(aws_lambda_function_url.og[0].function_url, "https://", ""), "/", "")
@@ -508,7 +541,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   # SPA routing fallback (only when no OG Lambda — Lambda handles all HTML)
   dynamic "custom_error_response" {
-    for_each = local.has_og ? [] : [404, 403]
+    for_each = local.has_og || !var.spa_fallback ? [] : [404, 403]
     content {
       error_code         = custom_error_response.value
       response_code      = 200
@@ -552,7 +585,7 @@ resource "terraform_data" "deployment_marker" {
 action "aws_cloudfront_create_invalidation" "invalidate_all" {
   config {
     distribution_id = aws_cloudfront_distribution.this.id
-    paths           = ["/*"]
+    paths           = var.invalidation_paths
   }
 }
 
