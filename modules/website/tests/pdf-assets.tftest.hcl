@@ -43,6 +43,8 @@ run "pdf_assets" {
     condition = (
       local.entry_js == null && local.entry_css == null &&
       length(aws_lambda_function.og) == 0 &&
+      length(aws_lambda_permission.og_url) == 0 &&
+      length(aws_lambda_permission.og_url_invoke) == 0 &&
       aws_cloudfront_distribution.this.default_root_object == "index.html"
     )
     error_message = "Static sites must use their built HTML without evaluating dynamic OG entry discovery."
@@ -135,6 +137,17 @@ run "dynamic_og_entry" {
         description = "Keep the dynamic renderer's entry paths unchanged."
       }
     }
+  }
+  assert {
+    condition = (
+      aws_lambda_permission.og_url[0].action == "lambda:InvokeFunctionUrl" &&
+      aws_lambda_permission.og_url[0].principal == "*" &&
+      aws_lambda_permission.og_url[0].function_url_auth_type == "NONE" &&
+      aws_lambda_permission.og_url_invoke[0].action == "lambda:InvokeFunction" &&
+      aws_lambda_permission.og_url_invoke[0].principal == "*" &&
+      aws_lambda_permission.og_url_invoke[0].invoked_via_function_url == true
+    )
+    error_message = "Public OG origins require both URL grants, with InvokeFunction restricted to Function URL requests."
   }
   assert {
     condition = (

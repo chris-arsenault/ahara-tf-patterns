@@ -337,6 +337,25 @@ resource "aws_lambda_function_url" "og" {
   authorization_type = "NONE"
 }
 
+# NONE-auth URLs need both grants. Restrict direct invocation to the URL path.
+resource "aws_lambda_permission" "og_url" {
+  count                  = local.has_og ? 1 : 0
+  statement_id           = "AllowPublicFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.og[0].function_name
+  principal              = "*"
+  function_url_auth_type = aws_lambda_function_url.og[0].authorization_type
+}
+
+resource "aws_lambda_permission" "og_url_invoke" {
+  count                    = local.has_og ? 1 : 0
+  statement_id             = "AllowInvocationThroughFunctionUrl"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.og[0].function_name
+  principal                = "*"
+  invoked_via_function_url = true
+}
+
 # =============================================================================
 # CloudFront
 # =============================================================================
@@ -350,6 +369,8 @@ resource "aws_cloudfront_origin_access_control" "this" {
 }
 
 resource "aws_cloudfront_distribution" "this" {
+  depends_on = [aws_lambda_permission.og_url, aws_lambda_permission.og_url_invoke]
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = local.has_og ? null : "index.html"
